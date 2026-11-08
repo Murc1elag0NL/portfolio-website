@@ -59,16 +59,16 @@
     </div>
   </header>
 
-  <!-- COLOR NAVIGATION (Sticky) -->
+  <!-- COLOR NAVIGATION (Sticky & Centered) -->
   <nav class="sticky top-0 z-40 bg-pureWhite/95 backdrop-blur-sm border-b border-black px-6 md:px-12">
-    <div class="max-w-6xl mx-auto flex items-center gap-6 md:gap-8 overflow-x-auto no-scrollbar py-4" id="categoryNav">
-      <!-- Populated dynamically -->
+    <div class="max-w-6xl mx-auto flex items-center justify-center gap-6 md:gap-8 overflow-x-auto no-scrollbar py-4" id="categoryNav">
+      <!-- Dynamisch gevuld in het midden -->
     </div>
   </nav>
 
   <!-- CAROUSELS PER COLOR -->
   <main class="max-w-6xl mx-auto px-6 md:px-12 py-12 space-y-24" id="portfolioContainer">
-    <!-- Populated dynamically -->
+    <!-- Dynamisch opgebouwd -->
   </main>
 
   <!-- FOOTER -->
@@ -82,49 +82,13 @@
   <!-- SCRIPT & DATA -->
   <script>
     // ==========================================
-    // PHOTOS & SUBJECTS PER COLOR
-    // EXIF is removed; adjust 'subject' and 'src' per photo
+    // SPECTRUM ORDER: RED -> ORANGE -> YELLOW -> GREEN -> BLUE -> BLACK
+    // Pas hier per foto 'src' en 'subject' aan
     // ==========================================
     const categoryData = [
       {
-        id: 'green',
-        title: '01. Green',
-        photos: [
-          {
-            src: 'https://images.unsplash.com/photo-1448375240586-882707db888b?auto=format&fit=crop&w=1600&q=80',
-            subject: 'Pine Forest Mist'
-          },
-          {
-            src: 'https://images.unsplash.com/photo-1511497584788-87676104235f?auto=format&fit=crop&w=1600&q=80',
-            subject: 'Morning Canopy'
-          },
-          {
-            src: 'https://images.unsplash.com/photo-1473448912268-2022ce9509d8?auto=format&fit=crop&w=1600&q=80',
-            subject: 'Fern Valley'
-          }
-        ]
-      },
-      {
-        id: 'blue',
-        title: '02. Blue',
-        photos: [
-          {
-            src: 'https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=1600&q=80',
-            subject: 'Alpine Lake Basin'
-          },
-          {
-            src: 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=1600&q=80',
-            subject: 'Coastal Horizon'
-          },
-          {
-            src: 'https://images.unsplash.com/photo-1518837695005-2083093ee35b?auto=format&fit=crop&w=1600&q=80',
-            subject: 'Deep Water Reflections'
-          }
-        ]
-      },
-      {
         id: 'red',
-        title: '03. Red',
+        title: '01. Red',
         photos: [
           {
             src: 'https://images.unsplash.com/photo-1518709268805-4e9042af9f23?auto=format&fit=crop&w=1600&q=80',
@@ -142,7 +106,7 @@
       },
       {
         id: 'orange',
-        title: '04. Orange',
+        title: '02. Orange',
         photos: [
           {
             src: 'https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=1600&q=80',
@@ -160,7 +124,7 @@
       },
       {
         id: 'yellow',
-        title: '05. Yellow',
+        title: '03. Yellow',
         photos: [
           {
             src: 'https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?auto=format&fit=crop&w=1600&q=80',
@@ -177,6 +141,42 @@
         ]
       },
       {
+        id: 'green',
+        title: '04. Green',
+        photos: [
+          {
+            src: 'https://images.unsplash.com/photo-1448375240586-882707db888b?auto=format&fit=crop&w=1600&q=80',
+            subject: 'Pine Forest Mist'
+          },
+          {
+            src: 'https://images.unsplash.com/photo-1511497584788-87676104235f?auto=format&fit=crop&w=1600&q=80',
+            subject: 'Morning Canopy'
+          },
+          {
+            src: 'https://images.unsplash.com/photo-1473448912268-2022ce9509d8?auto=format&fit=crop&w=1600&q=80',
+            subject: 'Fern Valley'
+          }
+        ]
+      },
+      {
+        id: 'blue',
+        title: '05. Blue',
+        photos: [
+          {
+            src: 'https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=1600&q=80',
+            subject: 'Alpine Lake Basin'
+          },
+          {
+            src: 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=1600&q=80',
+            subject: 'Coastal Horizon'
+          },
+          {
+            src: 'https://images.unsplash.com/photo-1518837695005-2083093ee35b?auto=format&fit=crop&w=1600&q=80',
+            subject: 'Deep Water Reflections'
+          }
+        ]
+      },
+      {
         id: 'black',
         title: '06. Black',
         photos: [
@@ -186,11 +186,11 @@
           },
           {
             src: 'https://images.unsplash.com/photo-1517841905240-472988babdf9?auto=format&fit=crop&w=1600&q=80',
-            subject: 'Studio Portrait Silhouette'
+            subject: 'Studio Silhouette'
           },
           {
             src: 'https://images.unsplash.com/photo-1509198397868-475647b2a1e5?auto=format&fit=crop&w=1600&q=80',
-            subject: 'Night City Architecture'
+            subject: 'Night City Geometry'
           }
         ]
       }
@@ -205,14 +205,14 @@
       categoryData.forEach((section) => {
         activeIndices[section.id] = 0;
 
-        // Navigation link
+        // Sticky navigatielink
         const navItem = document.createElement('a');
         navItem.href = `#${section.id}`;
         navItem.className = 'text-xs uppercase tracking-widest font-medium whitespace-nowrap text-neutral-500 hover:text-black transition-colors';
         navItem.innerText = section.title;
         navContainer.appendChild(navItem);
 
-        // Section container
+        // Sectie container
         const sectionEl = document.createElement('section');
         sectionEl.id = section.id;
         sectionEl.className = 'scroll-mt-28 space-y-4';
@@ -249,7 +249,7 @@
             </button>
           </div>
 
-          <!-- Subject line (replaces EXIF) -->
+          <!-- Onderwerp per foto -->
           <div class="flex justify-between items-center text-xs uppercase tracking-wider text-neutral-600 font-medium py-1">
             <span id="subject-${section.id}">
               ${section.photos[0].subject}
