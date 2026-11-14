@@ -40,16 +40,16 @@
     }
 
     #heroStage {
-      height: 48vh;
-      min-height: 320px;
-      max-height: 560px;
+      height: 46vh;
+      min-height: 300px;
+      max-height: 520px;
     }
 
     @media (min-width: 768px) {
       #heroStage {
-        height: 56vh;
-        min-height: 420px;
-        max-height: 660px;
+        height: 54vh;
+        min-height: 400px;
+        max-height: 620px;
       }
     }
 
@@ -86,9 +86,9 @@
   </header>
 
   <!-- HOOFDPODIUM & 54-FOTO CONTACTSHEET -->
-  <main class="flex-1 max-w-6xl w-full mx-auto px-6 md:px-12 pb-16 flex flex-col gap-6">
+  <main class="flex-1 max-w-6xl w-full mx-auto px-6 md:px-12 pb-24 flex flex-col gap-6">
 
-    <!-- STICKY GROTE HERO WEERGAVE (Blijft bovenaan zichtbaar tijdens het scrollen) -->
+    <!-- STICKY GROTE HERO WEERGAVE -->
     <section
       aria-label="Geselecteerde foto"
       class="sticky top-0 z-20 bg-pureWhite pt-2 pb-3 w-full flex flex-col items-center shrink-0"
@@ -115,8 +115,8 @@
       </div>
     </section>
 
-    <!-- 54 MINIATUREN (Scrollen netjes onder het vaste podium door) -->
-    <section aria-label="Fotoselectie" class="w-full pt-1 shrink-0">
+    <!-- 54 MINIATUREN (Direct zichtbaar, daarna optioneel geoptimaliseerd) -->
+    <section aria-label="Fotoselectie" class="relative z-10 w-full pt-1 pb-12 shrink-0">
       <div
         id="thumbnailGrid"
         class="flex flex-wrap justify-center gap-2 md:gap-2.5"
@@ -183,68 +183,40 @@
       }, 150);
     }, { passive: true });
 
-    function createTinyThumbnail(src, targetImgElement) {
-      return new Promise((resolve) => {
-        const tempImg = new Image();
-        tempImg.decoding = 'async';
-        tempImg.src = src;
-
-        tempImg.onload = () => {
-          try {
-            const canvas = document.createElement('canvas');
-            const targetW = 240;
-            const targetH = 180;
-            canvas.width = targetW;
-            canvas.height = targetH;
-            const ctx = canvas.getContext('2d');
-
-            const imgRatio = tempImg.width / tempImg.height;
-            const targetRatio = targetW / targetH;
-            let drawW, drawH, offsetX, offsetY;
-
-            if (imgRatio > targetRatio) {
-              drawH = tempImg.height;
-              drawW = tempImg.height * targetRatio;
-              offsetX = (tempImg.width - drawW) / 2;
-              offsetY = 0;
-            } else {
-              drawW = tempImg.width;
-              drawH = tempImg.width / targetRatio;
-              offsetX = 0;
-              offsetY = (tempImg.height - drawH) / 2;
-            }
-
-            ctx.drawImage(tempImg, offsetX, offsetY, drawW, drawH, 0, 0, targetW, targetH);
-            targetImgElement.src = canvas.toDataURL('image/jpeg', 0.72);
-            targetImgElement.classList.remove('opacity-0');
-          } catch (e) {
-            targetImgElement.src = src;
-            targetImgElement.classList.remove('opacity-0');
-          }
-          resolve();
-        };
-
-        tempImg.onerror = () => {
-          targetImgElement.src = src;
-          targetImgElement.classList.remove('opacity-0');
-          resolve();
-        };
-      });
-    }
-
-    async function loadThumbnailsInQueue(thumbElements) {
-      const concurrency = 4;
-      let cursor = 0;
-
-      async function worker() {
-        while (cursor < thumbElements.length) {
-          const idx = cursor++;
-          await createTinyThumbnail(photos[idx].src, thumbElements[idx]);
-        }
+    function optimizeThumbWithCanvas(imgElement) {
+      if (!imgElement.complete || imgElement.naturalWidth === 0 || imgElement.dataset.optimized === 'true') {
+        return;
       }
+      try {
+        const canvas = document.createElement('canvas');
+        const targetW = 240;
+        const targetH = 180;
+        canvas.width = targetW;
+        canvas.height = targetH;
+        const ctx = canvas.getContext('2d');
 
-      const workers = Array.from({ length: concurrency }, () => worker());
-      await Promise.all(workers);
+        const imgRatio = imgElement.naturalWidth / imgElement.naturalHeight;
+        const targetRatio = targetW / targetH;
+        let drawW, drawH, offsetX, offsetY;
+
+        if (imgRatio > targetRatio) {
+          drawH = imgElement.naturalHeight;
+          drawW = imgElement.naturalHeight * targetRatio;
+          offsetX = (imgElement.naturalWidth - drawW) / 2;
+          offsetY = 0;
+        } else {
+          drawW = imgElement.naturalWidth;
+          drawH = imgElement.naturalWidth / targetRatio;
+          offsetX = 0;
+          offsetY = (imgElement.naturalHeight - drawH) / 2;
+        }
+
+        ctx.drawImage(imgElement, offsetX, offsetY, drawW, drawH, 0, 0, targetW, targetH);
+        imgElement.src = canvas.toDataURL('image/jpeg', 0.72);
+        imgElement.dataset.optimized = 'true';
+      } catch (e) {
+        // Laat originele src staan als canvas niet beschikbaar is
+      }
     }
 
     function preloadImage(index) {
@@ -350,8 +322,6 @@
     }
 
     function initGallery() {
-      const thumbElements = [];
-
       photos.forEach((photo, index) => {
         const num = String(index + 1).padStart(2, '0');
         const btn = document.createElement('button');
@@ -360,10 +330,14 @@
         btn.setAttribute('aria-label', `Foto ${num}`);
 
         const img = document.createElement('img');
+        img.src = photo.src;
         img.alt = `Foto ${num}`;
-        img.className = 'w-full h-full object-cover opacity-0';
+        img.loading = index < 15 ? 'eager' : 'lazy';
+        img.decoding = 'async';
+        img.className = 'w-full h-full object-cover';
+        img.addEventListener('load', () => optimizeThumbWithCanvas(img), { once: true });
+
         btn.appendChild(img);
-        thumbElements.push(img);
 
         btn.addEventListener('pointermove', (e) => {
           if (e.pointerType === 'mouse' && !isScrolling) {
@@ -381,10 +355,6 @@
         : 0;
 
       selectPhoto(initialIndex, false);
-
-      setTimeout(() => {
-        loadThumbnailsInQueue(thumbElements);
-      }, 150);
 
       heroStage.addEventListener('click', openLightbox);
       lightbox.addEventListener('click', closeLightbox);
