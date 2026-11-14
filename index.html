@@ -98,7 +98,7 @@
         class="relative w-full flex items-center justify-center bg-pureWhite cursor-zoom-in select-none touch-pan-y overflow-hidden"
         title="Klik voor volledig scherm"
       >
-        <!-- Vorige foto knop (mobiel & desktop) -->
+        <!-- Vorige foto knop -->
         <button
           id="heroPrevBtn"
           type="button"
@@ -113,13 +113,13 @@
         <img
           id="heroImage"
           src="fotos/01.jpg"
-          alt="Bjorn van Es - 01"
+          alt="Bjorn van Es - Tsitsikamma NP"
           decoding="async"
           fetchpriority="high"
           class="w-full h-full object-contain px-11 md:px-14"
         />
 
-        <!-- Volgende foto knop (mobiel & desktop) -->
+        <!-- Volgende foto knop -->
         <button
           id="heroNextBtn"
           type="button"
@@ -132,9 +132,9 @@
         </button>
       </div>
 
-      <!-- TELLER -->
+      <!-- TITEL & TELLER -->
       <div class="w-full max-w-3xl h-6 flex items-center justify-between pt-3 px-1 text-xs uppercase tracking-widest text-neutral-500 font-medium shrink-0">
-        <span id="heroTitle" class="truncate pr-4"></span>
+        <span id="heroTitle" class="truncate pr-4 text-pureBlack">Tsitsikamma NP</span>
         <span id="heroCounter" class="tabular-nums shrink-0 text-neutral-400">01 / 54</span>
       </div>
     </section>
@@ -163,7 +163,7 @@
     class="fixed inset-0 z-50 bg-pureWhite hidden items-center justify-center p-4 md:p-10 cursor-zoom-out select-none touch-pan-y"
     aria-hidden="true"
   >
-    <!-- Vorige foto knop in lightbox (mobiel & desktop) -->
+    <!-- Vorige foto knop in lightbox -->
     <button
       id="lightboxPrevBtn"
       type="button"
@@ -183,7 +183,7 @@
       class="max-h-full max-w-full w-auto h-auto object-contain px-12 md:px-16"
     />
 
-    <!-- Volgende foto knop in lightbox (mobiel & desktop) -->
+    <!-- Volgende foto knop in lightbox -->
     <button
       id="lightboxNextBtn"
       type="button"
@@ -201,11 +201,68 @@
     const TOTAL_PHOTOS = 54;
     const EXT = 'jpg';
 
+    const photoTitles = [
+      "Tsitsikamma NP",             // 01
+      "Madeira",                    // 02
+      "Madeira",                    // 03
+      "Karpathos",                  // 04
+      "Ko Panyi",                   // 05
+      "Phi Phi Islands",            // 06
+      "Ama Dablam",                 // 07
+      "Lukla airport",              // 08
+      "Everest basecamp",           // 09
+      "Tioga Road",                 // 10
+      "Madeira",                    // 11
+      "Kijkduin",                   // 12
+      "Valley of Fire SP",          // 13
+      "Bryce Canyon NP",            // 14
+      "Grand Canyon NP",            // 15
+      "Valley of Fire SP",          // 16
+      "Secnic Byway 12",            // 17
+      "Antelope Canyon",            // 18
+      "Atelope Canyon",             // 19
+      "Black howler monkey",        // 20
+      "Turfmarkt",                  // 21
+      "Robben Island",              // 22
+      "St. Peter's Basilica",       // 23
+      "Osaka",                      // 24
+      "Circuit park Zandvoort",     // 25
+      "Mclaren P1",                 // 26
+      "Ko Panyi",                   // 27
+      "Oakland Bay Bridge",         // 28
+      "Normandy American Cemetery", // 29
+      "Madeira",                    // 30
+      "Moon",                       // 31
+      "Kijkduin",                   // 32
+      "North sea",                  // 33
+      "Zandmotor",                  // 34
+      "Kiter",                      // 35
+      "Moon eclipse",               // 36
+      "Full moon",                  // 37
+      "Kinderdijk",                 // 38
+      "Kruger NP",                  // 39
+      "Kiter",                      // 40
+      "Kijkduin",                   // 41
+      "Hollywood",                  // 42
+      "Sunset",                     // 43
+      "Sunset",                     // 44
+      "Sunset",                     // 45
+      "Sunset",                     // 46
+      "Rotterdam Harbour",          // 47
+      "Fish boat",                  // 48
+      "Sunset",                     // 49
+      "Rotterdam Harbour",          // 50
+      "Sunset",                     // 51
+      "Clouds",                     // 52
+      "Noctilucent clouds",         // 53
+      "Sun eclips"                  // 54
+    ];
+
     const photos = Array.from({ length: TOTAL_PHOTOS }, (_, i) => {
       const num = String(i + 1).padStart(2, '0');
       return {
         src: `fotos/${num}.${EXT}`,
-        title: ''
+        title: photoTitles[i] || ''
       };
     });
 
@@ -300,7 +357,7 @@
       const photo = photos[currentIndex];
       const formattedNum = String(currentIndex + 1).padStart(2, '0');
 
-      heroTitle.textContent = '';
+      heroTitle.textContent = photo.title;
       heroCounter.textContent = `${formattedNum} / ${String(photos.length).padStart(2, '0')}`;
 
       const buttons = thumbnailGrid.querySelectorAll('.thumb-btn');
@@ -320,7 +377,7 @@
       loader.onload = () => {
         if (requestId !== activeRequestId) return;
         heroImage.src = photo.src;
-        heroImage.alt = `Bjorn van Es - ${formattedNum}`;
+        heroImage.alt = photo.title ? `Bjorn van Es - ${photo.title}` : `Bjorn van Es - ${formattedNum}`;
         heroImage.dataset.loaded = 'true';
         if (!lightbox.classList.contains('hidden')) {
           lightboxImage.src = photo.src;
@@ -379,11 +436,11 @@
         const btn = document.createElement('button');
         btn.type = 'button';
         btn.className = 'thumb-btn aspect-[4/3] w-[calc(20%-0.4rem)] sm:w-[calc(16.666%-0.521rem)] lg:w-[calc(10%-0.5625rem)] overflow-hidden bg-neutral-100 focus:outline-none cursor-pointer';
-        btn.setAttribute('aria-label', `Foto ${num}`);
+        btn.setAttribute('aria-label', photo.title ? `${num} - ${photo.title}` : `Foto ${num}`);
 
         const img = document.createElement('img');
         img.src = photo.src;
-        img.alt = `Foto ${num}`;
+        img.alt = photo.title || `Foto ${num}`;
         img.loading = index < 15 ? 'eager' : 'lazy';
         img.decoding = 'async';
         img.className = 'w-full h-full object-cover';
