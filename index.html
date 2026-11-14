@@ -5,12 +5,10 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Bjorn van Es</title>
 
-  <!-- Single clean, modern typeface -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 
-  <!-- Tailwind CSS via CDN -->
   <script src="https://cdn.tailwindcss.com"></script>
   <script>
     tailwind.config = {
@@ -75,7 +73,7 @@
   <!-- HOOFDPODIUM & 54-FOTO CONTACTSHEET -->
   <main class="flex-1 max-w-6xl w-full mx-auto px-6 md:px-12 pb-16 flex flex-col justify-between gap-10">
 
-    <!-- GROTE HERO WEERGAVE (Vaste podiumhoogte) -->
+    <!-- GROTE HERO WEERGAVE -->
     <section aria-label="Geselecteerde foto" class="w-full flex flex-col items-center">
       <div
         id="heroStage"
@@ -90,7 +88,7 @@
         />
       </div>
 
-      <!-- SUBTIELE TITEL & TELLER -->
+      <!-- TELLER -->
       <div class="w-full max-w-3xl flex items-center justify-between pt-4 px-1 text-xs uppercase tracking-widest text-neutral-500 font-medium">
         <span id="heroTitle" class="truncate pr-4"></span>
         <span id="heroCounter" class="tabular-nums shrink-0 text-neutral-400">01 / 54</span>
@@ -102,9 +100,7 @@
       <div
         id="thumbnailGrid"
         class="flex flex-wrap justify-center gap-2 md:gap-2.5"
-      >
-        <!-- Dynamisch gevuld vanuit het script -->
-      </div>
+      ></div>
     </section>
 
   </main>
@@ -133,23 +129,14 @@
 
   <!-- SCRIPT -->
   <script>
-    // ==========================================
-    // AUTOMATISCHE LIJST: fotos/01.jpg t/m fotos/54.jpg
-    // ==========================================
     const TOTAL_PHOTOS = 54;
-
-    const customTitles = {
-      // Optioneel per foto een titel toevoegen, bijvoorbeeld:
-      // 1: 'Kustlijn',
-      // 26: 'McLaren',
-      // 54: 'Bloedmaan'
-    };
+    const EXT = 'jpg';
 
     const photos = Array.from({ length: TOTAL_PHOTOS }, (_, i) => {
       const num = String(i + 1).padStart(2, '0');
       return {
-        src: `fotos/${num}.jpg`,
-        title: customTitles[i + 1] || ''
+        src: `fotos/${num}.${EXT}`,
+        title: ''
       };
     });
 
@@ -191,14 +178,13 @@
       const photo = photos[currentIndex];
       const formattedNum = String(currentIndex + 1).padStart(2, '0');
 
-      // Zachte crossfade op het hoofdpodium
       heroImage.style.opacity = '0.15';
 
       setTimeout(() => {
         heroImage.src = photo.src;
-        heroImage.alt = photo.title || `Bjorn van Es - ${formattedNum}`;
+        heroImage.alt = `Bjorn van Es - ${formattedNum}`;
         heroImage.dataset.loaded = 'true';
-        heroTitle.textContent = photo.title || '';
+        heroTitle.textContent = '';
         heroCounter.textContent = `${formattedNum} / ${String(photos.length).padStart(2, '0')}`;
 
         if (!lightbox.classList.contains('hidden')) {
@@ -210,7 +196,6 @@
         });
       }, 90);
 
-      // Update actieve thumbnail
       const buttons = thumbnailGrid.querySelectorAll('.thumb-btn');
       buttons.forEach((btn, idx) => {
         if (idx === currentIndex) {
@@ -226,7 +211,6 @@
         updateUrlHash(currentIndex);
       }
 
-      // Preload naastgelegen beelden voor directe overgangen
       preloadImage(currentIndex + 1);
       preloadImage(currentIndex - 1);
     }
@@ -274,14 +258,13 @@
         const num = String(index + 1).padStart(2, '0');
         const btn = document.createElement('button');
         btn.type = 'button';
-        // 5 per rij op mobiel, 6 op tablet, exact 10 per rij op desktop (met gecentreerde laatste rij)
         btn.className = 'thumb-btn aspect-[4/3] w-[calc(20%-0.4rem)] sm:w-[calc(16.666%-0.521rem)] lg:w-[calc(10%-0.5625rem)] overflow-hidden bg-neutral-100 focus:outline-none cursor-pointer';
-        btn.setAttribute('aria-label', photo.title ? `${num}: ${photo.title}` : `Foto ${num}`);
+        btn.setAttribute('aria-label', `Foto ${num}`);
 
         btn.innerHTML = `
           <img
             src="${photo.src}"
-            alt="${photo.title || `Foto ${num}`}"
+            alt="Foto ${num}"
             loading="${index < 20 ? 'eager' : 'lazy'}"
             class="w-full h-full object-cover"
           />
@@ -294,7 +277,6 @@
         thumbnailGrid.appendChild(btn);
       });
 
-      // Start op URL-hash indien meegegeven (bijv. #26), anders op foto 1
       const hashNumber = parseInt(window.location.hash.replace('#', ''), 10);
       const initialIndex = (!isNaN(hashNumber) && hashNumber >= 1 && hashNumber <= photos.length)
         ? hashNumber - 1
@@ -302,13 +284,11 @@
 
       selectPhoto(initialIndex, false);
 
-      // Lightbox & Touch-swipes
       heroStage.addEventListener('click', openLightbox);
       lightbox.addEventListener('click', closeLightbox);
       attachSwipeNavigation(heroStage);
       attachSwipeNavigation(lightbox);
 
-      // Toetsenbordnavigatie
       document.addEventListener('keydown', (e) => {
         if (e.key === 'ArrowRight') {
           e.preventDefault();
@@ -321,7 +301,6 @@
         }
       });
 
-      // Luister naar handmatige wijziging in URL-hash
       window.addEventListener('hashchange', () => {
         const num = parseInt(window.location.hash.replace('#', ''), 10);
         if (!isNaN(num) && num >= 1 && num <= photos.length) {
