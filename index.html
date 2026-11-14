@@ -157,6 +157,79 @@
     const lightbox = document.getElementById('lightbox');
     const lightboxImage = document.getElementById('lightboxImage');
 
+    // ========================================================
+    // JAVASCRIPT THUMBNAIL COMPRESSOR (Verkleint beelden in RAM)
+    // ========================================================
+    function createTinyThumbnail(src, targetImgElement) {
+      return new Promise((resolve) => {
+        const tempImg = new Image();
+        tempImg.decoding = 'async';
+        tempImg.src = src;
+
+        tempImg.onload = () => {
+          try {
+            // Verklein naar 240x180px (4:3) zodat het geheugen minimaal belast wordt
+            const canvas = document.createElement('canvas');
+            const targetW = 240;
+            const targetH = 180;
+            canvas.width = targetW;
+            canvas.height = targetH;
+            const ctx = canvas.getContext('2d');
+
+            // Bereken centre-crop (zoals object-cover)
+            const imgRatio = tempImg.width / tempImg.height;
+            const targetRatio = targetW / targetH;
+            let drawW, drawH, offsetX, offsetY;
+
+            if (imgRatio > targetRatio) {
+              drawH = tempImg.height;
+              drawW = tempImg.height * targetRatio;
+              offsetX = (tempImg.width - drawW) / 2;
+              offsetY = 0;
+            } else {
+              drawW = tempImg.width;
+              drawH = tempImg.width / targetRatio;
+              offsetX = 0;
+              offsetY = (tempImg.height - drawH) / 2;
+            }
+
+            ctx.drawImage(tempImg, offsetX, offsetY, drawW, drawH, 0, 0, targetW, targetH);
+
+            // Zet om naar een superlichte JPEG (ca. 8 KB per thumbnail!)
+            targetImgElement.src = canvas.toDataURL('image/jpeg', 0.72);
+            targetImgElement.classList.remove('opacity-0');
+          } catch (e) {
+            // Fallback mocht canvas geblokkeerd worden
+            targetImgElement.src = src;
+            targetImgElement.classList.remove('opacity-0');
+          }
+          resolve();
+        };
+
+        tempImg.onerror = () => {
+          targetImgElement.src = src;
+          targetImgElement.classList.remove('opacity-0');
+          resolve();
+        };
+      });
+    }
+
+    // Laadt thumbnails gedoseerd in groepjes van 4 zodat de browser niet vastloopt
+    async function loadThumbnailsInQueue(thumbElements) {
+      const concurrency = 4;
+      let cursor = 0;
+
+      async function worker() {
+        while (cursor < thumbElements.length) {
+          const idx = cursor++;
+          await createTinyThumbnail(photos[idx].src, thumbElements[idx]);
+        }
+      }
+
+      const workers = Array.from({ length: concurrency }, () => worker());
+      await Promise.all(workers);
+    }
+
     function preloadImage(index) {
       const wrappedIndex = (index + photos.length) % photos.length;
       const src = photos[wrappedIndex].src;
@@ -261,6 +334,8 @@
     }
 
     function initGallery() {
+      const thumbElements = [];
+
       photos.forEach((photo, index) => {
         const num = String(index + 1).padStart(2, '0');
         const btn = document.createElement('button');
@@ -268,17 +343,12 @@
         btn.className = 'thumb-btn aspect-[4/3] w-[calc(20%-0.4rem)] sm:w-[calc(16.666%-0.521rem)] lg:w-[calc(10%-0.5625rem)] overflow-hidden bg-neutral-100 focus:outline-none cursor-pointer';
         btn.setAttribute('aria-label', `Foto ${num}`);
 
-        btn.innerHTML = `
-          <img
-            src="${photo.src}"
-            alt="Foto ${num}"
-            loading="${index < 10 ? 'eager' : 'lazy'}"
-            decoding="async"
-            class="w-full h-full object-cover"
-          />
-        `;
+        const img = document.createElement('img');
+        img.alt = `Foto ${num}`;
+        img.className = 'w-full h-full object-cover opacity-0';
+        btn.appendChild(img);
+        thumbElements.push(img);
 
-        // Korte hover-vertraging voorkomt dat de browser vastloopt als je snel over 54 foto's veegt
         btn.addEventListener('mouseenter', () => {
           clearTimeout(hoverTimeout);
           hoverTimeout = setTimeout(() => selectPhoto(index), 55);
@@ -299,6 +369,11 @@
         : 0;
 
       selectPhoto(initialIndex, false);
+
+      // Start pas met het opbouwen van de miniatuur-wachtrij nadat de hoofdfoto staat
+      setTimeout(() => {
+        loadThumbnailsInQueue(thumbElements);
+      }, 150);
 
       heroStage.addEventListener('click', openLightbox);
       lightbox.addEventListener('click', closeLightbox);
