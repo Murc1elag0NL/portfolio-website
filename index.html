@@ -1,15 +1,15 @@
 <!DOCTYPE html>
-<html lang="en" class="scroll-smooth">
+<html lang="nl" class="scroll-smooth">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Bjorn van Es</title>
-  
+
   <!-- Single clean, modern typeface -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-  
+
   <!-- Tailwind CSS via CDN -->
   <script src="https://cdn.tailwindcss.com"></script>
   <script>
@@ -27,419 +27,310 @@
       }
     }
   </script>
-  
+
   <style>
     body {
       font-family: 'Plus Jakarta Sans', sans-serif;
       background-color: #ffffff;
       color: #000000;
       -webkit-font-smoothing: antialiased;
-      -moz-osx-font-smoothing: grayscale;
     }
 
-    /* Subtle crossfade for hero image transitions */
-    #mainPhoto {
-      transition: opacity 180ms cubic-bezier(0.22, 1, 0.36, 1);
+    #heroImage {
+      transition: opacity 160ms ease-in-out;
     }
 
-    /* Hide scrollbar cleanly when lightbox is active */
-    body.lightbox-open {
-      overflow: hidden;
+    .thumb-btn img {
+      transition: filter 200ms ease, opacity 200ms ease, transform 250ms ease;
+    }
+
+    .thumb-btn:hover img,
+    .thumb-btn.is-active img {
+      filter: grayscale(0%);
+      opacity: 1;
+    }
+
+    .thumb-btn:not(.is-active) img {
+      filter: grayscale(100%);
+      opacity: 0.55;
+    }
+
+    .thumb-btn:not(.is-active):hover img {
+      filter: grayscale(0%);
+      opacity: 1;
     }
   </style>
 </head>
-<body class="bg-pureWhite text-pureBlack selection:bg-pureBlack selection:text-pureWhite">
+<body class="bg-pureWhite text-pureBlack selection:bg-pureBlack selection:text-pureWhite min-h-screen flex flex-col">
 
-  <!-- MINIMALIST CENTERED HEADER -->
-  <header class="pt-12 pb-6 px-6 md:px-12">
-    <div class="max-w-5xl mx-auto text-center">
-      <h1 class="text-2xl sm:text-3xl md:text-4xl font-semibold tracking-[0.18em] uppercase text-pureBlack">
+  <!-- HEADER -->
+  <header class="pt-10 pb-6 px-6 md:px-12">
+    <div class="max-w-6xl mx-auto text-center">
+      <h1 class="text-2xl md:text-4xl font-bold tracking-tight uppercase">
         Bjorn van Es
       </h1>
     </div>
   </header>
 
-  <!-- MUSEUM-GRADE HERO SHOWCASE & 50-THUMBNAIL CONTACT SHEET -->
-  <main class="max-w-5xl mx-auto px-6 md:px-12 pt-4 pb-20 space-y-12 md:space-y-16">
-    
-    <!-- FIXED-HEIGHT HERO DISPLAY (Zero layout shift between landscape & portrait) -->
-    <section aria-label="Featured photograph" class="flex flex-col items-center">
-      <div 
+  <!-- HOOFDPODIUM & 54-FOTO CONTACTSHEET -->
+  <main class="flex-1 max-w-6xl w-full mx-auto px-6 md:px-12 pb-16 flex flex-col justify-between gap-10">
+
+    <!-- GROTE HERO WEERGAVE (Vaste podiumhoogte) -->
+    <section aria-label="Geselecteerde foto" class="w-full flex flex-col items-center">
+      <div
         id="heroStage"
-        role="button"
-        tabindex="0"
-        aria-label="Open photograph in fullscreen view"
-        class="group relative w-full h-[52vh] sm:h-[58vh] md:h-[65vh] flex items-center justify-center bg-pureWhite cursor-zoom-in focus:outline-none"
+        class="w-full h-[54vh] md:h-[64vh] flex items-center justify-center bg-pureWhite cursor-zoom-in select-none touch-pan-y"
+        title="Klik voor volledig scherm"
       >
-        <img 
-          id="mainPhoto"
-          src="" 
-          alt="" 
-          class="max-h-full max-w-full w-auto h-auto object-contain block select-none opacity-100"
+        <img
+          id="heroImage"
+          src="fotos/01.jpg"
+          alt="Bjorn van Es - 01"
+          class="max-h-full max-w-full w-auto h-auto object-contain"
         />
       </div>
 
-      <!-- CLEAN GALLERY METADATA BAR -->
-      <div class="w-full pt-5 mt-3 flex justify-between items-baseline">
-        <p id="mainTitle" class="text-[11px] sm:text-xs uppercase tracking-[0.16em] text-neutral-800 font-medium">
-          <!-- Active photo title -->
-        </p>
-        <span id="photoCounter" class="text-[11px] sm:text-xs uppercase tracking-[0.16em] text-neutral-400 font-normal tabular-nums">
-          01 / 50
-        </span>
+      <!-- SUBTIELE TITEL & TELLER -->
+      <div class="w-full max-w-3xl flex items-center justify-between pt-4 px-1 text-xs uppercase tracking-widest text-neutral-500 font-medium">
+        <span id="heroTitle" class="truncate pr-4"></span>
+        <span id="heroCounter" class="tabular-nums shrink-0 text-neutral-400">01 / 54</span>
       </div>
     </section>
 
-    <!-- 50-PHOTO CONTACT-SHEET GRID (Monochrome & dimmed until active/hovered) -->
-    <section aria-label="Photograph contact sheet">
-      <div 
-        id="thumbnailGrid" 
-        class="grid grid-cols-5 md:grid-cols-10 gap-2 sm:gap-2.5 md:gap-3"
+    <!-- 54 MINIATUREN (Rijen van 10 op desktop, laatste rij gecentreerd) -->
+    <section aria-label="Fotoselectie" class="w-full pt-2">
+      <div
+        id="thumbnailGrid"
+        class="flex flex-wrap justify-center gap-2 md:gap-2.5"
       >
-        <!-- 50 thumbnails dynamically generated -->
+        <!-- Dynamisch gevuld vanuit het script -->
       </div>
     </section>
 
   </main>
 
-  <!-- QUIET EDITORIAL FOOTER -->
-  <footer class="py-12 px-6 md:px-12">
-    <div class="max-w-5xl mx-auto flex flex-col sm:flex-row justify-between items-center gap-2 text-[11px] uppercase tracking-[0.16em] text-neutral-400 font-normal">
+  <!-- FOOTER -->
+  <footer class="py-8 px-6 md:px-12">
+    <div class="max-w-6xl mx-auto flex justify-between items-center text-[11px] uppercase tracking-widest text-neutral-400 font-medium">
       <span>Bjorn van Es</span>
       <span>&copy; All rights reserved</span>
     </div>
   </footer>
 
-  <!-- FULLSCREEN PURE-WHITE LIGHTBOX MODAL -->
-  <div 
-    id="lightboxModal" 
-    role="dialog" 
-    aria-modal="true" 
-    aria-label="Fullscreen photograph view"
-    class="fixed inset-0 z-50 hidden bg-pureWhite flex items-center justify-center p-4 sm:p-8 md:p-12 cursor-zoom-out select-none"
+  <!-- FULLSCREEN LIGHTBOX -->
+  <div
+    id="lightbox"
+    class="fixed inset-0 z-50 bg-pureWhite hidden items-center justify-center p-4 md:p-10 cursor-zoom-out select-none touch-pan-y"
+    aria-hidden="true"
   >
-    <img 
-      id="lightboxPhoto" 
-      src="" 
-      alt="" 
-      class="max-h-full max-w-full w-auto h-auto object-contain block"
+    <img
+      id="lightboxImage"
+      src=""
+      alt="Volledig scherm"
+      class="max-h-full max-w-full w-auto h-auto object-contain"
     />
   </div>
 
-  <!-- SCRIPT & DATA -->
+  <!-- SCRIPT -->
   <script>
     // ==========================================
-    // 50 CURATED PHOTOGRAPHY ITEMS
-    // Vervang de 'src' paden door je eigen bestanden uit de map 'fotos/'
-    // Bijvoorbeeld: { src: 'fotos/01-naam.jpg', title: 'Titel van de foto' }
+    // AUTOMATISCHE LIJST: fotos/01.jpg t/m fotos/54.jpg
     // ==========================================
-    const photos = [
-      { src: 'https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?auto=format&fit=crop&w=1800&q=85', title: 'First Ridge Light' },
-      { src: 'https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?auto=format&fit=crop&w=1800&q=85', title: 'Monochrome Facade' },
-      { src: 'https://images.unsplash.com/photo-1517841905240-472988babdf9?auto=format&fit=crop&w=1200&q=85', title: 'Studio Silhouette' },
-      { src: 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=1800&q=85', title: 'Coastal Horizon' },
-      { src: 'https://images.unsplash.com/photo-1448375240586-882707db888b?auto=format&fit=crop&w=1800&q=85', title: 'Pine Forest Mist' },
-      { src: 'https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=1800&q=85', title: 'Alpine Lake Basin' },
-      { src: 'https://images.unsplash.com/photo-1518709268805-4e9042af9f23?auto=format&fit=crop&w=1800&q=85', title: 'Autumn Foliage' },
-      { src: 'https://images.unsplash.com/photo-1508739773434-c26b3d09e071?auto=format&fit=crop&w=1800&q=85', title: 'Crimson Dunes' },
-      { src: 'https://images.unsplash.com/photo-1470240731273-7821a6eeb6bd?auto=format&fit=crop&w=1800&q=85', title: 'Sunset Valley' },
-      { src: 'https://images.unsplash.com/photo-1500534314209-a25ddb2bd429?auto=format&fit=crop&w=1800&q=85', title: 'Desert Canyon Warmth' },
-      { src: 'https://images.unsplash.com/photo-1509198397868-475647b2a1e5?auto=format&fit=crop&w=1800&q=85', title: 'Night City Geometry' },
-      { src: 'https://images.unsplash.com/photo-1534447677768-be436bb09401?auto=format&fit=crop&w=1800&q=85', title: 'Morning Bloom' },
-      { src: 'https://images.unsplash.com/photo-1511497584788-87676104235f?auto=format&fit=crop&w=1800&q=85', title: 'Morning Canopy' },
-      { src: 'https://images.unsplash.com/photo-1473448912268-2022ce9509d8?auto=format&fit=crop&w=1800&q=85', title: 'Fern Valley' },
-      { src: 'https://images.unsplash.com/photo-1518837695005-2083093ee35b?auto=format&fit=crop&w=1800&q=85', title: 'Deep Water Reflections' },
-      { src: 'https://images.unsplash.com/photo-1492684223066-81342ee5ff30?auto=format&fit=crop&w=1800&q=85', title: 'Urban Neon Light' },
-      { src: 'https://images.unsplash.com/photo-1513694203232-719a280e022f?auto=format&fit=crop&w=1800&q=85', title: 'Minimal Interior' },
-      { src: 'https://images.unsplash.com/photo-1494438639946-1ebd1d20bf85?auto=format&fit=crop&w=1800&q=85', title: 'Concrete Shadow Study' },
-      { src: 'https://images.unsplash.com/photo-1501785888041-af3ef285b470?auto=format&fit=crop&w=1800&q=85', title: 'Still Fjord' },
-      { src: 'https://images.unsplash.com/photo-1472214103451-9374bd1c798e?auto=format&fit=crop&w=1800&q=85', title: 'Lowland Mist' },
-      { src: 'https://images.unsplash.com/photo-1465146344425-f00d5f5c8f07?auto=format&fit=crop&w=1800&q=85', title: 'Wild Meadow' },
-      { src: 'https://images.unsplash.com/photo-1433086966358-54859d0ed716?auto=format&fit=crop&w=1200&q=85', title: 'Gorge Cascade' },
-      { src: 'https://images.unsplash.com/photo-1470071459604-3b5ec3a7fe05?auto=format&fit=crop&w=1800&q=85', title: 'Overcast Summit' },
-      { src: 'https://images.unsplash.com/photo-1441974231531-c6227db76b6e?auto=format&fit=crop&w=1800&q=85', title: 'Sunbeams Through Timber' },
-      { src: 'https://images.unsplash.com/photo-1505144808419-1957a94ca61e?auto=format&fit=crop&w=1200&q=85', title: 'Tidal Shore' },
-      { src: 'https://images.unsplash.com/photo-1469474968028-56623f02e42e?auto=format&fit=crop&w=1800&q=85', title: 'Highland Pass' },
-      { src: 'https://images.unsplash.com/photo-1426604966848-d7adac402bff?auto=format&fit=crop&w=1800&q=85', title: 'Granite Monolith' },
-      { src: 'https://images.unsplash.com/photo-1447752875215-b2761acb3c5d?auto=format&fit=crop&w=1800&q=85', title: 'Autumn Boardwalk' },
-      { src: 'https://images.unsplash.com/photo-1475924156734-496f6cac6ec1?auto=format&fit=crop&w=1800&q=85', title: 'Dusk Shoreline' },
-      { src: 'https://images.unsplash.com/photo-1519681393784-d120267933ba?auto=format&fit=crop&w=1800&q=85', title: 'Starlight Ridge' },
-      { src: 'https://images.unsplash.com/photo-1493246507139-91e8fad9978e?auto=format&fit=crop&w=1800&q=85', title: 'Glacial Reflection' },
-      { src: 'https://images.unsplash.com/photo-1502082553048-f009c37129b9?auto=format&fit=crop&w=1800&q=85', title: 'Solitary Oak' },
-      { src: 'https://images.unsplash.com/photo-1504198453319-5ce911bafcde?auto=format&fit=crop&w=1200&q=85', title: 'Nordic Silence' },
-      { src: 'https://images.unsplash.com/photo-1497436072909-60f360e1d4b1?auto=format&fit=crop&w=1800&q=85', title: 'Emerald Lake' },
-      { src: 'https://images.unsplash.com/photo-1513836279014-a89f7a76ae86?auto=format&fit=crop&w=1200&q=85', title: 'Vertical Timber' },
-      { src: 'https://images.unsplash.com/photo-1490730141103-6cac27aaab94?auto=format&fit=crop&w=1800&q=85', title: 'Amber Horizon' },
-      { src: 'https://images.unsplash.com/photo-1506260408121-e353d10b87c7?auto=format&fit=crop&w=1800&q=85', title: 'Rolling Hills' },
-      { src: 'https://images.unsplash.com/photo-1476514525535-07fb3b4ae5f1?auto=format&fit=crop&w=1800&q=85', title: 'Driftwood Cove' },
-      { src: 'https://images.unsplash.com/photo-1519904981063-b0cf448d479e?auto=format&fit=crop&w=1800&q=85', title: 'Summit Ascent' },
-      { src: 'https://images.unsplash.com/photo-1504608524841-42fe6f032b4b?auto=format&fit=crop&w=1800&q=85', title: 'Storm Front' },
-      { src: 'https://images.unsplash.com/photo-1494500764479-0c8f2919a3d8?auto=format&fit=crop&w=1800&q=85', title: 'Mirror Lake' },
-      { src: 'https://images.unsplash.com/photo-1513519245088-0e12902e5a38?auto=format&fit=crop&w=1200&q=85', title: 'Gallery Frame' },
-      { src: 'https://images.unsplash.com/photo-1482192505345-5655af888cc4?auto=format&fit=crop&w=1800&q=85', title: 'Winter Cabin' },
-      { src: 'https://images.unsplash.com/photo-1508193638397-1c4234db14d8?auto=format&fit=crop&w=1800&q=85', title: 'Amber Woodland' },
-      { src: 'https://images.unsplash.com/photo-1495567720989-cebdbdd97913?auto=format&fit=crop&w=1800&q=85', title: 'Evening Glow' },
-      { src: 'https://images.unsplash.com/photo-1500382017468-9049fed747ef?auto=format&fit=crop&w=1800&q=85', title: 'Morning Pasture' },
-      { src: 'https://images.unsplash.com/photo-1483728642387-6c3bdd6c93e5?auto=format&fit=crop&w=1800&q=85', title: 'Snowline Crest' },
-      { src: 'https://images.unsplash.com/photo-1504280390367-361c6d9f38f4?auto=format&fit=crop&w=1800&q=85', title: 'Night Camp' },
-      { src: 'https://images.unsplash.com/photo-1439853949127-fa647821eba0?auto=format&fit=crop&w=1200&q=85', title: 'Valley Falls' },
-      { src: 'https://images.unsplash.com/photo-1465056836041-7f43ac27dcb5?auto=format&fit=crop&w=1800&q=85', title: 'Blue Hour Peaks' }
-    ];
+    const TOTAL_PHOTOS = 54;
 
-    let activeIndex = 0;
-    let isLightboxOpen = false;
-    let swapTimeout = null;
-    let touchStartX = 0;
-    let touchStartY = 0;
+    const customTitles = {
+      // Optioneel per foto een titel toevoegen, bijvoorbeeld:
+      // 1: 'Kustlijn',
+      // 26: 'McLaren',
+      // 54: 'Bloedmaan'
+    };
+
+    const photos = Array.from({ length: TOTAL_PHOTOS }, (_, i) => {
+      const num = String(i + 1).padStart(2, '0');
+      return {
+        src: `fotos/${num}.jpg`,
+        title: customTitles[i + 1] || ''
+      };
+    });
+
+    let currentIndex = 0;
     const preloadedCache = new Set();
 
-    /**
-     * Parses window.location.hash (e.g. #1 to #50) and returns a valid 0-based photo index.
-     */
-    function getIndexFromHash() {
-      const rawHash = window.location.hash.replace('#', '').trim();
-      const parsedNumber = parseInt(rawHash, 10);
-      if (!isNaN(parsedNumber) && parsedNumber >= 1 && parsedNumber <= photos.length) {
-        return parsedNumber - 1;
-      }
-      return 0;
-    }
+    const heroStage = document.getElementById('heroStage');
+    const heroImage = document.getElementById('heroImage');
+    const heroTitle = document.getElementById('heroTitle');
+    const heroCounter = document.getElementById('heroCounter');
+    const thumbnailGrid = document.getElementById('thumbnailGrid');
+    const lightbox = document.getElementById('lightbox');
+    const lightboxImage = document.getElementById('lightboxImage');
 
-    /**
-     * Updates the URL hash cleanly (e.g. #23) without cluttering browser back-button history.
-     */
-    function syncUrlHash(index) {
-      const targetHash = `#${index + 1}`;
-      if (window.location.hash !== targetHash && window.history && window.history.replaceState) {
-        window.history.replaceState(null, '', targetHash);
-      }
-    }
-
-    /**
-     * Preloads high-resolution images in the background so browsing feels instantaneous.
-     */
     function preloadImage(index) {
-      const normalizedIndex = (index + photos.length) % photos.length;
-      if (preloadedCache.has(normalizedIndex)) return;
-      preloadedCache.add(normalizedIndex);
-
-      const img = new Image();
-      img.src = photos[normalizedIndex].src;
+      const wrappedIndex = (index + photos.length) % photos.length;
+      const src = photos[wrappedIndex].src;
+      if (!preloadedCache.has(src)) {
+        const img = new Image();
+        img.src = src;
+        preloadedCache.add(src);
+      }
     }
 
-    /**
-     * Updates the featured hero display, metadata, lightbox, URL hash, and active thumbnail state.
-     */
-    function selectPhoto(index, immediate = false) {
-      const normalizedIndex = (index + photos.length) % photos.length;
-      activeIndex = normalizedIndex;
-      const photo = photos[normalizedIndex];
+    function updateUrlHash(index) {
+      const targetHash = `#${index + 1}`;
+      if (window.location.hash !== targetHash) {
+        history.replaceState(null, '', targetHash);
+      }
+    }
 
-      const mainPhoto = document.getElementById('mainPhoto');
-      const mainTitle = document.getElementById('mainTitle');
-      const counter = document.getElementById('photoCounter');
-      const lightboxPhoto = document.getElementById('lightboxPhoto');
-
-      if (!mainPhoto || !mainTitle || !counter || !lightboxPhoto) return;
-
-      if (swapTimeout) {
-        clearTimeout(swapTimeout);
-        swapTimeout = null;
+    function selectPhoto(index, updateHash = true) {
+      const wrappedIndex = (index + photos.length) % photos.length;
+      if (wrappedIndex === currentIndex && heroImage.dataset.loaded === 'true') {
+        return;
       }
 
-      if (immediate) {
-        mainPhoto.src = photo.src;
-        mainPhoto.alt = photo.title;
-        mainPhoto.style.opacity = '1';
-      } else {
-        mainPhoto.style.opacity = '0.2';
-        swapTimeout = setTimeout(() => {
-          mainPhoto.src = photo.src;
-          mainPhoto.alt = photo.title;
-          mainPhoto.style.opacity = '1';
-        }, 90);
-      }
+      currentIndex = wrappedIndex;
+      const photo = photos[currentIndex];
+      const formattedNum = String(currentIndex + 1).padStart(2, '0');
 
-      // Synchronize fullscreen lightbox image
-      lightboxPhoto.src = photo.src;
-      lightboxPhoto.alt = photo.title;
+      // Zachte crossfade op het hoofdpodium
+      heroImage.style.opacity = '0.15';
 
-      // Update title and tabular counter
-      mainTitle.textContent = photo.title;
-      const formattedIndex = String(normalizedIndex + 1).padStart(2, '0');
-      const formattedTotal = String(photos.length).padStart(2, '0');
-      counter.textContent = `${formattedIndex} / ${formattedTotal}`;
+      setTimeout(() => {
+        heroImage.src = photo.src;
+        heroImage.alt = photo.title || `Bjorn van Es - ${formattedNum}`;
+        heroImage.dataset.loaded = 'true';
+        heroTitle.textContent = photo.title || '';
+        heroCounter.textContent = `${formattedNum} / ${String(photos.length).padStart(2, '0')}`;
 
-      // Keep shareable direct URL hash synchronized
-      syncUrlHash(normalizedIndex);
+        if (!lightbox.classList.contains('hidden')) {
+          lightboxImage.src = photo.src;
+        }
 
-      // Update thumbnail states: monochrome & dimmed when inactive, crisp full-color when active
-      const buttons = document.querySelectorAll('#thumbnailGrid button');
+        requestAnimationFrame(() => {
+          heroImage.style.opacity = '1';
+        });
+      }, 90);
+
+      // Update actieve thumbnail
+      const buttons = thumbnailGrid.querySelectorAll('.thumb-btn');
       buttons.forEach((btn, idx) => {
-        const img = btn.querySelector('img');
-        if (idx === normalizedIndex) {
+        if (idx === currentIndex) {
+          btn.classList.add('is-active', 'ring-1', 'ring-black', 'ring-offset-2');
           btn.setAttribute('aria-current', 'true');
-          btn.classList.add('ring-1', 'ring-pureBlack', 'ring-offset-2');
-          if (img) {
-            img.classList.remove('grayscale', 'opacity-55');
-            img.classList.add('grayscale-0', 'opacity-100');
-          }
         } else {
+          btn.classList.remove('is-active', 'ring-1', 'ring-black', 'ring-offset-2');
           btn.removeAttribute('aria-current');
-          btn.classList.remove('ring-1', 'ring-pureBlack', 'ring-offset-2');
-          if (img) {
-            img.classList.add('grayscale', 'opacity-55');
-            img.classList.remove('grayscale-0', 'opacity-100');
-          }
         }
       });
 
-      // Preload adjacent photos for zero-lag browsing
-      preloadImage(normalizedIndex + 1);
-      preloadImage(normalizedIndex - 1);
+      if (updateHash) {
+        updateUrlHash(currentIndex);
+      }
+
+      // Preload naastgelegen beelden voor directe overgangen
+      preloadImage(currentIndex + 1);
+      preloadImage(currentIndex - 1);
     }
 
-    /**
-     * Opens the fullscreen pure-white lightbox modal.
-     */
     function openLightbox() {
-      const lightboxModal = document.getElementById('lightboxModal');
-      if (!lightboxModal) return;
-      isLightboxOpen = true;
-      lightboxModal.classList.remove('hidden');
-      document.body.classList.add('lightbox-open');
+      lightboxImage.src = photos[currentIndex].src;
+      lightbox.classList.remove('hidden');
+      lightbox.classList.add('flex');
+      lightbox.setAttribute('aria-hidden', 'false');
+      document.body.style.overflow = 'hidden';
     }
 
-    /**
-     * Closes the fullscreen pure-white lightbox modal.
-     */
     function closeLightbox() {
-      const lightboxModal = document.getElementById('lightboxModal');
-      if (!lightboxModal) return;
-      isLightboxOpen = false;
-      lightboxModal.classList.add('hidden');
-      document.body.classList.remove('lightbox-open');
+      lightbox.classList.add('hidden');
+      lightbox.classList.remove('flex');
+      lightbox.setAttribute('aria-hidden', 'true');
+      document.body.style.overflow = '';
     }
 
-    /**
-     * Binds horizontal touch swipe gestures to an element for mobile & tablet navigation.
-     */
     function attachSwipeNavigation(element) {
-      if (!element) return;
+      let touchStartX = 0;
+      let touchStartY = 0;
 
       element.addEventListener('touchstart', (e) => {
-        if (e.touches.length === 1) {
-          touchStartX = e.touches[0].clientX;
-          touchStartY = e.touches[0].clientY;
-        }
+        touchStartX = e.changedTouches[0].screenX;
+        touchStartY = e.changedTouches[0].screenY;
       }, { passive: true });
 
       element.addEventListener('touchend', (e) => {
-        if (e.changedTouches.length !== 1) return;
-        const deltaX = e.changedTouches[0].clientX - touchStartX;
-        const deltaY = e.changedTouches[0].clientY - touchStartY;
+        const deltaX = e.changedTouches[0].screenX - touchStartX;
+        const deltaY = e.changedTouches[0].screenY - touchStartY;
 
-        // Trigger only on intentional horizontal swipes (ignore vertical page scrolling)
-        if (Math.abs(deltaX) > 45 && Math.abs(deltaX) > Math.abs(deltaY) * 1.2) {
+        if (Math.abs(deltaX) > 45 && Math.abs(deltaX) > Math.abs(deltaY)) {
           if (deltaX < 0) {
-            selectPhoto((activeIndex + 1) % photos.length);
+            selectPhoto(currentIndex + 1);
           } else {
-            selectPhoto((activeIndex - 1 + photos.length) % photos.length);
+            selectPhoto(currentIndex - 1);
           }
         }
       }, { passive: true });
     }
 
-    /**
-     * Builds the 50-thumbnail contact-sheet grid and binds hover, touch, click, and keyboard controls.
-     */
     function initGallery() {
-      const grid = document.getElementById('thumbnailGrid');
-      const heroStage = document.getElementById('heroStage');
-      const lightboxModal = document.getElementById('lightboxModal');
-
-      if (!grid || !heroStage || !lightboxModal) return;
-
-      grid.innerHTML = '';
-
       photos.forEach((photo, index) => {
-        const button = document.createElement('button');
-        button.type = 'button';
-        button.setAttribute('aria-label', `Select photograph ${index + 1}: ${photo.title}`);
-        button.className = 'group relative aspect-square w-full overflow-hidden bg-neutral-100 focus:outline-none focus:ring-1 focus:ring-pureBlack focus:ring-offset-2 transition-all duration-200';
+        const num = String(index + 1).padStart(2, '0');
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        // 5 per rij op mobiel, 6 op tablet, exact 10 per rij op desktop (met gecentreerde laatste rij)
+        btn.className = 'thumb-btn aspect-[4/3] w-[calc(20%-0.4rem)] sm:w-[calc(16.666%-0.521rem)] lg:w-[calc(10%-0.5625rem)] overflow-hidden bg-neutral-100 focus:outline-none cursor-pointer';
+        btn.setAttribute('aria-label', photo.title ? `${num}: ${photo.title}` : `Foto ${num}`);
 
-        const img = document.createElement('img');
-        img.src = photo.src;
-        img.alt = photo.title;
-        img.loading = index < 20 ? 'eager' : 'lazy';
-        img.className = 'w-full h-full object-cover grayscale opacity-55 group-hover:grayscale-0 group-hover:opacity-100 transition-all duration-200 pointer-events-none';
+        btn.innerHTML = `
+          <img
+            src="${photo.src}"
+            alt="${photo.title || `Foto ${num}`}"
+            loading="${index < 20 ? 'eager' : 'lazy'}"
+            class="w-full h-full object-cover"
+          />
+        `;
 
-        button.appendChild(img);
+        btn.addEventListener('mouseenter', () => selectPhoto(index));
+        btn.addEventListener('focus', () => selectPhoto(index));
+        btn.addEventListener('click', () => selectPhoto(index));
 
-        // Hover on desktop swaps immediately; click/tap selects on all devices
-        button.addEventListener('mouseenter', () => {
-          if (activeIndex !== index) {
-            selectPhoto(index);
-          }
-        });
-
-        button.addEventListener('click', () => {
-          if (activeIndex !== index) {
-            selectPhoto(index);
-          }
-        });
-
-        button.addEventListener('focus', () => {
-          if (activeIndex !== index) {
-            selectPhoto(index);
-          }
-        });
-
-        grid.appendChild(button);
+        thumbnailGrid.appendChild(btn);
       });
 
-      // Open fullscreen lightbox when clicking or pressing Enter/Space on the hero stage
+      // Start op URL-hash indien meegegeven (bijv. #26), anders op foto 1
+      const hashNumber = parseInt(window.location.hash.replace('#', ''), 10);
+      const initialIndex = (!isNaN(hashNumber) && hashNumber >= 1 && hashNumber <= photos.length)
+        ? hashNumber - 1
+        : 0;
+
+      selectPhoto(initialIndex, false);
+
+      // Lightbox & Touch-swipes
       heroStage.addEventListener('click', openLightbox);
-      heroStage.addEventListener('keydown', (e) => {
-        if (e.key === 'Enter' || e.key === ' ') {
-          e.preventDefault();
-          openLightbox();
-        }
-      });
-
-      // Click anywhere in the lightbox to close
-      lightboxModal.addEventListener('click', closeLightbox);
-
-      // Enable touch swipe left/right on both the main stage and fullscreen lightbox
+      lightbox.addEventListener('click', closeLightbox);
       attachSwipeNavigation(heroStage);
-      attachSwipeNavigation(lightboxModal);
+      attachSwipeNavigation(lightbox);
 
-      // Global keyboard navigation (Left/Right arrows & Escape)
+      // Toetsenbordnavigatie
       document.addEventListener('keydown', (e) => {
         if (e.key === 'ArrowRight') {
           e.preventDefault();
-          selectPhoto((activeIndex + 1) % photos.length);
+          selectPhoto(currentIndex + 1);
         } else if (e.key === 'ArrowLeft') {
           e.preventDefault();
-          selectPhoto((activeIndex - 1 + photos.length) % photos.length);
-        } else if (e.key === 'Escape' && isLightboxOpen) {
+          selectPhoto(currentIndex - 1);
+        } else if (e.key === 'Escape' && !lightbox.classList.contains('hidden')) {
           closeLightbox();
         }
       });
 
-      // Respond if the user manually edits or navigates via a URL hash (e.g. #14)
+      // Luister naar handmatige wijziging in URL-hash
       window.addEventListener('hashchange', () => {
-        const hashIndex = getIndexFromHash();
-        if (hashIndex !== activeIndex) {
-          selectPhoto(hashIndex, true);
+        const num = parseInt(window.location.hash.replace('#', ''), 10);
+        if (!isNaN(num) && num >= 1 && num <= photos.length) {
+          selectPhoto(num - 1, false);
         }
       });
-
-      // Initialize from URL hash if present (e.g. bjornvanes.nl/#23), otherwise photo 1
-      selectPhoto(getIndexFromHash(), true);
     }
 
-    window.onload = initGallery;
+    window.addEventListener('DOMContentLoaded', initGallery);
   </script>
 </body>
 </html>
