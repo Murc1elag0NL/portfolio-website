@@ -34,14 +34,8 @@
       -webkit-font-smoothing: antialiased;
     }
 
-    #heroImage {
-      transition: opacity 140ms ease-in-out;
-      will-change: opacity;
-    }
-
     .thumb-btn img {
-      transition: filter 180ms ease, opacity 180ms ease;
-      will-change: filter, opacity;
+      transition: filter 160ms ease, opacity 160ms ease;
     }
 
     .thumb-btn:hover img,
@@ -79,7 +73,7 @@
     <section aria-label="Geselecteerde foto" class="w-full flex flex-col items-center">
       <div
         id="heroStage"
-        class="w-full h-[54vh] md:h-[64vh] flex items-center justify-center bg-pureWhite cursor-zoom-in select-none touch-pan-y"
+        class="w-full h-[54vh] md:h-[64vh] flex items-center justify-center bg-pureWhite cursor-zoom-in select-none touch-pan-y overflow-hidden"
         title="Klik voor volledig scherm"
       >
         <img
@@ -146,7 +140,7 @@
     });
 
     let currentIndex = 0;
-    let hoverTimeout = null;
+    let activeRequestId = 0;
     const preloadedCache = new Set();
 
     const heroStage = document.getElementById('heroStage');
@@ -157,9 +151,6 @@
     const lightbox = document.getElementById('lightbox');
     const lightboxImage = document.getElementById('lightboxImage');
 
-    // ========================================================
-    // JAVASCRIPT THUMBNAIL COMPRESSOR (Verkleint beelden in RAM)
-    // ========================================================
     function createTinyThumbnail(src, targetImgElement) {
       return new Promise((resolve) => {
         const tempImg = new Image();
@@ -168,7 +159,6 @@
 
         tempImg.onload = () => {
           try {
-            // Verklein naar 240x180px (4:3) zodat het geheugen minimaal belast wordt
             const canvas = document.createElement('canvas');
             const targetW = 240;
             const targetH = 180;
@@ -176,7 +166,6 @@
             canvas.height = targetH;
             const ctx = canvas.getContext('2d');
 
-            // Bereken centre-crop (zoals object-cover)
             const imgRatio = tempImg.width / tempImg.height;
             const targetRatio = targetW / targetH;
             let drawW, drawH, offsetX, offsetY;
@@ -194,12 +183,9 @@
             }
 
             ctx.drawImage(tempImg, offsetX, offsetY, drawW, drawH, 0, 0, targetW, targetH);
-
-            // Zet om naar een superlichte JPEG (ca. 8 KB per thumbnail!)
             targetImgElement.src = canvas.toDataURL('image/jpeg', 0.72);
             targetImgElement.classList.remove('opacity-0');
           } catch (e) {
-            // Fallback mocht canvas geblokkeerd worden
             targetImgElement.src = src;
             targetImgElement.classList.remove('opacity-0');
           }
@@ -214,7 +200,6 @@
       });
     }
 
-    // Laadt thumbnails gedoseerd in groepjes van 4 zodat de browser niet vastloopt
     async function loadThumbnailsInQueue(thumbElements) {
       const concurrency = 4;
       let cursor = 0;
@@ -255,26 +240,13 @@
       }
 
       currentIndex = wrappedIndex;
+      const requestId = ++activeRequestId;
       const photo = photos[currentIndex];
       const formattedNum = String(currentIndex + 1).padStart(2, '0');
 
-      heroImage.style.opacity = '0.2';
-
-      setTimeout(() => {
-        heroImage.src = photo.src;
-        heroImage.alt = `Bjorn van Es - ${formattedNum}`;
-        heroImage.dataset.loaded = 'true';
-        heroTitle.textContent = '';
-        heroCounter.textContent = `${formattedNum} / ${String(photos.length).padStart(2, '0')}`;
-
-        if (!lightbox.classList.contains('hidden')) {
-          lightboxImage.src = photo.src;
-        }
-
-        requestAnimationFrame(() => {
-          heroImage.style.opacity = '1';
-        });
-      }, 60);
+      // Directe update van teller en rand zonder vertraagde timers
+      heroTitle.textContent = '';
+      heroCounter.textContent = `${formattedNum} / ${String(photos.length).padStart(2, '0')}`;
 
       const buttons = thumbnailGrid.querySelectorAll('.thumb-btn');
       buttons.forEach((btn, idx) => {
@@ -286,6 +258,20 @@
           btn.removeAttribute('aria-current');
         }
       });
+
+      // Laad het beeld op de achtergrond en plaats het ALLEEN als dit nog steeds de laatst gekozen foto is
+      const loader = new Image();
+      loader.decoding = 'async';
+      loader.src = photo.src;
+      loader.onload = () => {
+        if (requestId !== activeRequestId) return;
+        heroImage.src = photo.src;
+        heroImage.alt = `Bjorn van Es - ${formattedNum}`;
+        heroImage.dataset.loaded = 'true';
+        if (!lightbox.classList.contains('hidden')) {
+          lightboxImage.src = photo.src;
+        }
+      };
 
       if (updateHash) {
         updateUrlHash(currentIndex);
@@ -349,16 +335,12 @@
         btn.appendChild(img);
         thumbElements.push(img);
 
-        btn.addEventListener('mouseenter', () => {
-          clearTimeout(hoverTimeout);
-          hoverTimeout = setTimeout(() => selectPhoto(index), 55);
+        btn.addEventListener('pointerenter', (e) => {
+          if (e.pointerType === 'mouse') {
+            selectPhoto(index);
+          }
         });
-        btn.addEventListener('mouseleave', () => clearTimeout(hoverTimeout));
-        btn.addEventListener('focus', () => selectPhoto(index));
-        btn.addEventListener('click', () => {
-          clearTimeout(hoverTimeout);
-          selectPhoto(index);
-        });
+        btn.addEventListener('click', () => selectPhoto(index));
 
         thumbnailGrid.appendChild(btn);
       });
@@ -370,7 +352,6 @@
 
       selectPhoto(initialIndex, false);
 
-      // Start pas met het opbouwen van de miniatuur-wachtrij nadat de hoofdfoto staat
       setTimeout(() => {
         loadThumbnailsInQueue(thumbElements);
       }, 150);
