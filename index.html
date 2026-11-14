@@ -32,6 +32,22 @@
       background-color: #ffffff;
       color: #000000;
       -webkit-font-smoothing: antialiased;
+      overflow-y: scroll; /* Voorkomt verspringen door verschijnende/verdwijnende scrollbar */
+    }
+
+    /* Harde, onveranderlijke podiumhoogte zodat verticale foto's de pagina NOOIT verschuiven */
+    #heroStage {
+      height: 52vh;
+      min-height: 360px;
+      max-height: 620px;
+    }
+
+    @media (min-width: 768px) {
+      #heroStage {
+        height: 60vh;
+        min-height: 460px;
+        max-height: 720px;
+      }
     }
 
     .thumb-btn img {
@@ -58,7 +74,7 @@
 <body class="bg-pureWhite text-pureBlack selection:bg-pureBlack selection:text-pureWhite min-h-screen flex flex-col">
 
   <!-- HEADER -->
-  <header class="pt-10 pb-6 px-6 md:px-12">
+  <header class="pt-8 pb-5 px-6 md:px-12 shrink-0">
     <div class="max-w-6xl mx-auto text-center">
       <h1 class="text-2xl md:text-4xl font-bold tracking-tight uppercase">
         Bjorn van Es
@@ -67,13 +83,13 @@
   </header>
 
   <!-- HOOFDPODIUM & 54-FOTO CONTACTSHEET -->
-  <main class="flex-1 max-w-6xl w-full mx-auto px-6 md:px-12 pb-16 flex flex-col justify-between gap-10">
+  <main class="flex-1 max-w-6xl w-full mx-auto px-6 md:px-12 pb-16 flex flex-col gap-8">
 
-    <!-- GROTE HERO WEERGAVE -->
-    <section aria-label="Geselecteerde foto" class="w-full flex flex-col items-center">
+    <!-- GROTE HERO WEERGAVE (100% vaste hoogte voor zowel liggend als staand) -->
+    <section aria-label="Geselecteerde foto" class="w-full flex flex-col items-center shrink-0">
       <div
         id="heroStage"
-        class="w-full h-[54vh] md:h-[64vh] flex items-center justify-center bg-pureWhite cursor-zoom-in select-none touch-pan-y overflow-hidden"
+        class="w-full flex items-center justify-center bg-pureWhite cursor-zoom-in select-none touch-pan-y overflow-hidden"
         title="Klik voor volledig scherm"
       >
         <img
@@ -82,19 +98,19 @@
           alt="Bjorn van Es - 01"
           decoding="async"
           fetchpriority="high"
-          class="max-h-full max-w-full w-auto h-auto object-contain"
+          class="w-full h-full object-contain"
         />
       </div>
 
-      <!-- TELLER -->
-      <div class="w-full max-w-3xl flex items-center justify-between pt-4 px-1 text-xs uppercase tracking-widest text-neutral-500 font-medium">
+      <!-- TELLER (Vaste regelhoogte) -->
+      <div class="w-full max-w-3xl h-6 flex items-center justify-between pt-3 px-1 text-xs uppercase tracking-widest text-neutral-500 font-medium shrink-0">
         <span id="heroTitle" class="truncate pr-4"></span>
         <span id="heroCounter" class="tabular-nums shrink-0 text-neutral-400">01 / 54</span>
       </div>
     </section>
 
-    <!-- 54 MINIATUREN -->
-    <section aria-label="Fotoselectie" class="w-full pt-2">
+    <!-- 54 MINIATUREN (Blijven altijd op exact dezelfde plek staan) -->
+    <section aria-label="Fotoselectie" class="w-full pt-1 shrink-0">
       <div
         id="thumbnailGrid"
         class="flex flex-wrap justify-center gap-2 md:gap-2.5"
@@ -104,7 +120,7 @@
   </main>
 
   <!-- FOOTER -->
-  <footer class="py-8 px-6 md:px-12">
+  <footer class="py-8 px-6 md:px-12 shrink-0">
     <div class="max-w-6xl mx-auto flex justify-between items-center text-[11px] uppercase tracking-widest text-neutral-400 font-medium">
       <span>Bjorn van Es</span>
       <span>&copy; All rights reserved</span>
@@ -244,7 +260,6 @@
       const photo = photos[currentIndex];
       const formattedNum = String(currentIndex + 1).padStart(2, '0');
 
-      // Directe update van teller en rand zonder vertraagde timers
       heroTitle.textContent = '';
       heroCounter.textContent = `${formattedNum} / ${String(photos.length).padStart(2, '0')}`;
 
@@ -259,7 +274,6 @@
         }
       });
 
-      // Laad het beeld op de achtergrond en plaats het ALLEEN als dit nog steeds de laatst gekozen foto is
       const loader = new Image();
       loader.decoding = 'async';
       loader.src = photo.src;
