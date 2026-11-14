@@ -35,11 +35,13 @@
     }
 
     #heroImage {
-      transition: opacity 160ms ease-in-out;
+      transition: opacity 140ms ease-in-out;
+      will-change: opacity;
     }
 
     .thumb-btn img {
-      transition: filter 200ms ease, opacity 200ms ease, transform 250ms ease;
+      transition: filter 180ms ease, opacity 180ms ease;
+      will-change: filter, opacity;
     }
 
     .thumb-btn:hover img,
@@ -84,6 +86,8 @@
           id="heroImage"
           src="fotos/01.jpg"
           alt="Bjorn van Es - 01"
+          decoding="async"
+          fetchpriority="high"
           class="max-h-full max-w-full w-auto h-auto object-contain"
         />
       </div>
@@ -95,7 +99,7 @@
       </div>
     </section>
 
-    <!-- 54 MINIATUREN (Rijen van 10 op desktop, laatste rij gecentreerd) -->
+    <!-- 54 MINIATUREN -->
     <section aria-label="Fotoselectie" class="w-full pt-2">
       <div
         id="thumbnailGrid"
@@ -123,6 +127,7 @@
       id="lightboxImage"
       src=""
       alt="Volledig scherm"
+      decoding="async"
       class="max-h-full max-w-full w-auto h-auto object-contain"
     />
   </div>
@@ -141,6 +146,7 @@
     });
 
     let currentIndex = 0;
+    let hoverTimeout = null;
     const preloadedCache = new Set();
 
     const heroStage = document.getElementById('heroStage');
@@ -156,6 +162,7 @@
       const src = photos[wrappedIndex].src;
       if (!preloadedCache.has(src)) {
         const img = new Image();
+        img.decoding = 'async';
         img.src = src;
         preloadedCache.add(src);
       }
@@ -178,7 +185,7 @@
       const photo = photos[currentIndex];
       const formattedNum = String(currentIndex + 1).padStart(2, '0');
 
-      heroImage.style.opacity = '0.15';
+      heroImage.style.opacity = '0.2';
 
       setTimeout(() => {
         heroImage.src = photo.src;
@@ -194,7 +201,7 @@
         requestAnimationFrame(() => {
           heroImage.style.opacity = '1';
         });
-      }, 90);
+      }, 60);
 
       const buttons = thumbnailGrid.querySelectorAll('.thumb-btn');
       buttons.forEach((btn, idx) => {
@@ -265,14 +272,23 @@
           <img
             src="${photo.src}"
             alt="Foto ${num}"
-            loading="${index < 20 ? 'eager' : 'lazy'}"
+            loading="${index < 10 ? 'eager' : 'lazy'}"
+            decoding="async"
             class="w-full h-full object-cover"
           />
         `;
 
-        btn.addEventListener('mouseenter', () => selectPhoto(index));
+        // Korte hover-vertraging voorkomt dat de browser vastloopt als je snel over 54 foto's veegt
+        btn.addEventListener('mouseenter', () => {
+          clearTimeout(hoverTimeout);
+          hoverTimeout = setTimeout(() => selectPhoto(index), 55);
+        });
+        btn.addEventListener('mouseleave', () => clearTimeout(hoverTimeout));
         btn.addEventListener('focus', () => selectPhoto(index));
-        btn.addEventListener('click', () => selectPhoto(index));
+        btn.addEventListener('click', () => {
+          clearTimeout(hoverTimeout);
+          selectPhoto(index);
+        });
 
         thumbnailGrid.appendChild(btn);
       });
