@@ -95,17 +95,41 @@
     >
       <div
         id="heroStage"
-        class="w-full flex items-center justify-center bg-pureWhite cursor-zoom-in select-none touch-pan-y overflow-hidden"
+        class="relative w-full flex items-center justify-center bg-pureWhite cursor-zoom-in select-none touch-pan-y overflow-hidden"
         title="Klik voor volledig scherm"
       >
+        <!-- Vorige foto knop (alleen mobiel) -->
+        <button
+          id="heroPrevBtn"
+          type="button"
+          aria-label="Vorige foto"
+          class="md:hidden absolute left-1 z-10 w-10 h-10 flex items-center justify-center bg-pureWhite/85 text-pureBlack border border-black/15 active:bg-pureBlack active:text-pureWhite transition-colors"
+        >
+          <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="square">
+            <path d="M15 18l-6-6 6-6" />
+          </svg>
+        </button>
+
         <img
           id="heroImage"
           src="fotos/01.jpg"
           alt="Bjorn van Es - 01"
           decoding="async"
           fetchpriority="high"
-          class="w-full h-full object-contain"
+          class="w-full h-full object-contain px-10 md:px-0"
         />
+
+        <!-- Volgende foto knop (alleen mobiel) -->
+        <button
+          id="heroNextBtn"
+          type="button"
+          aria-label="Volgende foto"
+          class="md:hidden absolute right-1 z-10 w-10 h-10 flex items-center justify-center bg-pureWhite/85 text-pureBlack border border-black/15 active:bg-pureBlack active:text-pureWhite transition-colors"
+        >
+          <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="square">
+            <path d="M9 18l6-6-6-6" />
+          </svg>
+        </button>
       </div>
 
       <!-- TELLER -->
@@ -115,7 +139,7 @@
       </div>
     </section>
 
-    <!-- 54 MINIATUREN (Direct zichtbaar, daarna optioneel geoptimaliseerd) -->
+    <!-- 54 MINIATUREN -->
     <section aria-label="Fotoselectie" class="relative z-10 w-full pt-1 pb-12 shrink-0">
       <div
         id="thumbnailGrid"
@@ -139,6 +163,18 @@
     class="fixed inset-0 z-50 bg-pureWhite hidden items-center justify-center p-4 md:p-10 cursor-zoom-out select-none touch-pan-y"
     aria-hidden="true"
   >
+    <!-- Vorige foto knop in lightbox (alleen mobiel) -->
+    <button
+      id="lightboxPrevBtn"
+      type="button"
+      aria-label="Vorige foto"
+      class="md:hidden absolute left-3 z-10 w-11 h-11 flex items-center justify-center bg-pureWhite/90 text-pureBlack border border-black/15 active:bg-pureBlack active:text-pureWhite transition-colors"
+    >
+      <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="square">
+        <path d="M15 18l-6-6 6-6" />
+      </svg>
+    </button>
+
     <img
       id="lightboxImage"
       src=""
@@ -146,6 +182,18 @@
       decoding="async"
       class="max-h-full max-w-full w-auto h-auto object-contain"
     />
+
+    <!-- Volgende foto knop in lightbox (alleen mobiel) -->
+    <button
+      id="lightboxNextBtn"
+      type="button"
+      aria-label="Volgende foto"
+      class="md:hidden absolute right-3 z-10 w-11 h-11 flex items-center justify-center bg-pureWhite/90 text-pureBlack border border-black/15 active:bg-pureBlack active:text-pureWhite transition-colors"
+    >
+      <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="square">
+        <path d="M9 18l6-6-6-6" />
+      </svg>
+    </button>
   </div>
 
   <!-- SCRIPT -->
@@ -171,9 +219,13 @@
     const heroImage = document.getElementById('heroImage');
     const heroTitle = document.getElementById('heroTitle');
     const heroCounter = document.getElementById('heroCounter');
+    const heroPrevBtn = document.getElementById('heroPrevBtn');
+    const heroNextBtn = document.getElementById('heroNextBtn');
     const thumbnailGrid = document.getElementById('thumbnailGrid');
     const lightbox = document.getElementById('lightbox');
     const lightboxImage = document.getElementById('lightboxImage');
+    const lightboxPrevBtn = document.getElementById('lightboxPrevBtn');
+    const lightboxNextBtn = document.getElementById('lightboxNextBtn');
 
     window.addEventListener('scroll', () => {
       isScrolling = true;
@@ -355,6 +407,24 @@
         : 0;
 
       selectPhoto(initialIndex, false);
+
+      // Mobiele navigatiepijltjes (stopPropagation voorkomt openen/sluiten van fullscreen lightbox)
+      heroPrevBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        selectPhoto(currentIndex - 1, true);
+      });
+      heroNextBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        selectPhoto(currentIndex + 1, true);
+      });
+      lightboxPrevBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        selectPhoto(currentIndex - 1, true);
+      });
+      lightboxNextBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        selectPhoto(currentIndex + 1, true);
+      });
 
       heroStage.addEventListener('click', openLightbox);
       lightbox.addEventListener('click', closeLightbox);
