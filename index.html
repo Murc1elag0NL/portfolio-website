@@ -28,7 +28,7 @@
 
   <style>
     html, body {
-      overflow-anchor: none; /* Voorkomt dat Chrome/Edge de scrollpositie laat verspringen */
+      overflow-anchor: none;
     }
 
     body {
@@ -40,16 +40,16 @@
     }
 
     #heroStage {
-      height: 52vh;
-      min-height: 360px;
-      max-height: 620px;
+      height: 48vh;
+      min-height: 320px;
+      max-height: 560px;
     }
 
     @media (min-width: 768px) {
       #heroStage {
-        height: 60vh;
-        min-height: 460px;
-        max-height: 720px;
+        height: 56vh;
+        min-height: 420px;
+        max-height: 660px;
       }
     }
 
@@ -77,7 +77,7 @@
 <body class="bg-pureWhite text-pureBlack selection:bg-pureBlack selection:text-pureWhite min-h-screen flex flex-col">
 
   <!-- HEADER -->
-  <header class="pt-8 pb-5 px-6 md:px-12 shrink-0">
+  <header class="pt-7 pb-4 px-6 md:px-12 shrink-0">
     <div class="max-w-6xl mx-auto text-center">
       <h1 class="text-2xl md:text-4xl font-bold tracking-tight uppercase">
         Bjorn van Es
@@ -86,10 +86,13 @@
   </header>
 
   <!-- HOOFDPODIUM & 54-FOTO CONTACTSHEET -->
-  <main class="flex-1 max-w-6xl w-full mx-auto px-6 md:px-12 pb-16 flex flex-col gap-8">
+  <main class="flex-1 max-w-6xl w-full mx-auto px-6 md:px-12 pb-16 flex flex-col gap-6">
 
-    <!-- GROTE HERO WEERGAVE -->
-    <section aria-label="Geselecteerde foto" class="w-full flex flex-col items-center shrink-0">
+    <!-- STICKY GROTE HERO WEERGAVE (Blijft bovenaan zichtbaar tijdens het scrollen) -->
+    <section
+      aria-label="Geselecteerde foto"
+      class="sticky top-0 z-20 bg-pureWhite pt-2 pb-3 w-full flex flex-col items-center shrink-0"
+    >
       <div
         id="heroStage"
         class="w-full flex items-center justify-center bg-pureWhite cursor-zoom-in select-none touch-pan-y overflow-hidden"
@@ -112,7 +115,7 @@
       </div>
     </section>
 
-    <!-- 54 MINIATUREN -->
+    <!-- 54 MINIATUREN (Scrollen netjes onder het vaste podium door) -->
     <section aria-label="Fotoselectie" class="w-full pt-1 shrink-0">
       <div
         id="thumbnailGrid"
@@ -172,4 +175,243 @@
     const lightbox = document.getElementById('lightbox');
     const lightboxImage = document.getElementById('lightboxImage');
 
-    // Pauzeer
+    window.addEventListener('scroll', () => {
+      isScrolling = true;
+      clearTimeout(scrollTimer);
+      scrollTimer = setTimeout(() => {
+        isScrolling = false;
+      }, 150);
+    }, { passive: true });
+
+    function createTinyThumbnail(src, targetImgElement) {
+      return new Promise((resolve) => {
+        const tempImg = new Image();
+        tempImg.decoding = 'async';
+        tempImg.src = src;
+
+        tempImg.onload = () => {
+          try {
+            const canvas = document.createElement('canvas');
+            const targetW = 240;
+            const targetH = 180;
+            canvas.width = targetW;
+            canvas.height = targetH;
+            const ctx = canvas.getContext('2d');
+
+            const imgRatio = tempImg.width / tempImg.height;
+            const targetRatio = targetW / targetH;
+            let drawW, drawH, offsetX, offsetY;
+
+            if (imgRatio > targetRatio) {
+              drawH = tempImg.height;
+              drawW = tempImg.height * targetRatio;
+              offsetX = (tempImg.width - drawW) / 2;
+              offsetY = 0;
+            } else {
+              drawW = tempImg.width;
+              drawH = tempImg.width / targetRatio;
+              offsetX = 0;
+              offsetY = (tempImg.height - drawH) / 2;
+            }
+
+            ctx.drawImage(tempImg, offsetX, offsetY, drawW, drawH, 0, 0, targetW, targetH);
+            targetImgElement.src = canvas.toDataURL('image/jpeg', 0.72);
+            targetImgElement.classList.remove('opacity-0');
+          } catch (e) {
+            targetImgElement.src = src;
+            targetImgElement.classList.remove('opacity-0');
+          }
+          resolve();
+        };
+
+        tempImg.onerror = () => {
+          targetImgElement.src = src;
+          targetImgElement.classList.remove('opacity-0');
+          resolve();
+        };
+      });
+    }
+
+    async function loadThumbnailsInQueue(thumbElements) {
+      const concurrency = 4;
+      let cursor = 0;
+
+      async function worker() {
+        while (cursor < thumbElements.length) {
+          const idx = cursor++;
+          await createTinyThumbnail(photos[idx].src, thumbElements[idx]);
+        }
+      }
+
+      const workers = Array.from({ length: concurrency }, () => worker());
+      await Promise.all(workers);
+    }
+
+    function preloadImage(index) {
+      const wrappedIndex = (index + photos.length) % photos.length;
+      const src = photos[wrappedIndex].src;
+      if (!preloadedCache.has(src)) {
+        const img = new Image();
+        img.decoding = 'async';
+        img.src = src;
+        preloadedCache.add(src);
+      }
+    }
+
+    function updateUrlHash(index) {
+      const targetHash = `#${index + 1}`;
+      if (window.location.hash !== targetHash) {
+        history.replaceState(null, '', targetHash);
+      }
+    }
+
+    function selectPhoto(index, updateHash = false) {
+      const wrappedIndex = (index + photos.length) % photos.length;
+      if (wrappedIndex === currentIndex && heroImage.dataset.loaded === 'true') {
+        return;
+      }
+
+      currentIndex = wrappedIndex;
+      const requestId = ++activeRequestId;
+      const photo = photos[currentIndex];
+      const formattedNum = String(currentIndex + 1).padStart(2, '0');
+
+      heroTitle.textContent = '';
+      heroCounter.textContent = `${formattedNum} / ${String(photos.length).padStart(2, '0')}`;
+
+      const buttons = thumbnailGrid.querySelectorAll('.thumb-btn');
+      buttons.forEach((btn, idx) => {
+        if (idx === currentIndex) {
+          btn.classList.add('is-active', 'ring-1', 'ring-black', 'ring-offset-2');
+          btn.setAttribute('aria-current', 'true');
+        } else {
+          btn.classList.remove('is-active', 'ring-1', 'ring-black', 'ring-offset-2');
+          btn.removeAttribute('aria-current');
+        }
+      });
+
+      const loader = new Image();
+      loader.decoding = 'async';
+      loader.src = photo.src;
+      loader.onload = () => {
+        if (requestId !== activeRequestId) return;
+        heroImage.src = photo.src;
+        heroImage.alt = `Bjorn van Es - ${formattedNum}`;
+        heroImage.dataset.loaded = 'true';
+        if (!lightbox.classList.contains('hidden')) {
+          lightboxImage.src = photo.src;
+        }
+      };
+
+      if (updateHash) {
+        updateUrlHash(currentIndex);
+      }
+
+      preloadImage(currentIndex + 1);
+      preloadImage(currentIndex - 1);
+    }
+
+    function openLightbox() {
+      lightboxImage.src = photos[currentIndex].src;
+      lightbox.classList.remove('hidden');
+      lightbox.classList.add('flex');
+      lightbox.setAttribute('aria-hidden', 'false');
+      document.body.style.overflow = 'hidden';
+    }
+
+    function closeLightbox() {
+      lightbox.classList.add('hidden');
+      lightbox.classList.remove('flex');
+      lightbox.setAttribute('aria-hidden', 'true');
+      document.body.style.overflow = '';
+    }
+
+    function attachSwipeNavigation(element) {
+      let touchStartX = 0;
+      let touchStartY = 0;
+
+      element.addEventListener('touchstart', (e) => {
+        touchStartX = e.changedTouches[0].screenX;
+        touchStartY = e.changedTouches[0].screenY;
+      }, { passive: true });
+
+      element.addEventListener('touchend', (e) => {
+        const deltaX = e.changedTouches[0].screenX - touchStartX;
+        const deltaY = e.changedTouches[0].screenY - touchStartY;
+
+        if (Math.abs(deltaX) > 45 && Math.abs(deltaX) > Math.abs(deltaY)) {
+          if (deltaX < 0) {
+            selectPhoto(currentIndex + 1, true);
+          } else {
+            selectPhoto(currentIndex - 1, true);
+          }
+        }
+      }, { passive: true });
+    }
+
+    function initGallery() {
+      const thumbElements = [];
+
+      photos.forEach((photo, index) => {
+        const num = String(index + 1).padStart(2, '0');
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'thumb-btn aspect-[4/3] w-[calc(20%-0.4rem)] sm:w-[calc(16.666%-0.521rem)] lg:w-[calc(10%-0.5625rem)] overflow-hidden bg-neutral-100 focus:outline-none cursor-pointer';
+        btn.setAttribute('aria-label', `Foto ${num}`);
+
+        const img = document.createElement('img');
+        img.alt = `Foto ${num}`;
+        img.className = 'w-full h-full object-cover opacity-0';
+        btn.appendChild(img);
+        thumbElements.push(img);
+
+        btn.addEventListener('pointermove', (e) => {
+          if (e.pointerType === 'mouse' && !isScrolling) {
+            selectPhoto(index, false);
+          }
+        });
+        btn.addEventListener('click', () => selectPhoto(index, true));
+
+        thumbnailGrid.appendChild(btn);
+      });
+
+      const hashNumber = parseInt(window.location.hash.replace('#', ''), 10);
+      const initialIndex = (!isNaN(hashNumber) && hashNumber >= 1 && hashNumber <= photos.length)
+        ? hashNumber - 1
+        : 0;
+
+      selectPhoto(initialIndex, false);
+
+      setTimeout(() => {
+        loadThumbnailsInQueue(thumbElements);
+      }, 150);
+
+      heroStage.addEventListener('click', openLightbox);
+      lightbox.addEventListener('click', closeLightbox);
+      attachSwipeNavigation(heroStage);
+      attachSwipeNavigation(lightbox);
+
+      document.addEventListener('keydown', (e) => {
+        if (e.key === 'ArrowRight') {
+          e.preventDefault();
+          selectPhoto(currentIndex + 1, true);
+        } else if (e.key === 'ArrowLeft') {
+          e.preventDefault();
+          selectPhoto(currentIndex - 1, true);
+        } else if (e.key === 'Escape' && !lightbox.classList.contains('hidden')) {
+          closeLightbox();
+        }
+      });
+
+      window.addEventListener('hashchange', () => {
+        const num = parseInt(window.location.hash.replace('#', ''), 10);
+        if (!isNaN(num) && num >= 1 && num <= photos.length) {
+          selectPhoto(num - 1, false);
+        }
+      });
+    }
+
+    window.addEventListener('DOMContentLoaded', initGallery);
+  </script>
+</body>
+</html>
