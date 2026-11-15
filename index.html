@@ -57,15 +57,22 @@
     .thumb-btn img {
       opacity: 0;
       filter: grayscale(100%);
-      transition: opacity 450ms cubic-bezier(0.22, 1, 0.36, 1), filter 200ms ease;
+      transition: opacity 420ms cubic-bezier(0.22, 1, 0.36, 1), filter 220ms ease, transform 220ms ease;
     }
 
-    /* Zodra de foto is ingeladen en zijn beurt bereikt: vloeit in als onderdeel van de laadbalk */
+    /* Standaard ingeladen ruststand */
     .thumb-btn.is-loaded:not(.is-active) img {
       opacity: 0.55;
       filter: grayscale(100%);
     }
 
+    /* Stap 1: Magneet-effect voor de direct aangrenzende miniaturen (links en rechts) */
+    .thumb-btn.is-loaded.is-neighbor:not(.is-active) img {
+      opacity: 0.82;
+      filter: grayscale(55%);
+    }
+
+    /* Actieve of aangewezen foto */
     .thumb-btn.is-loaded:hover img,
     .thumb-btn.is-loaded.is-active img {
       opacity: 1;
@@ -130,14 +137,19 @@
         </button>
       </div>
 
-      <!-- TITEL & TELLER -->
+      <!-- TITEL & KLIKBARE TELLER (Kopieert directe link) -->
       <div class="w-full max-w-3xl h-6 flex items-center justify-between pt-3 px-1 text-xs uppercase tracking-widest text-neutral-500 font-medium shrink-0">
         <span id="heroTitle" class="truncate pr-4 text-pureBlack">Tsitsikamma NP</span>
-        <span id="heroCounter" class="tabular-nums shrink-0 text-neutral-400">01 / 54</span>
+        <button
+          id="heroCounterBtn"
+          type="button"
+          title="Klik om directe link naar deze foto te kopiëren"
+          class="tabular-nums shrink-0 text-neutral-400 hover:text-pureBlack transition-colors cursor-pointer uppercase tracking-widest"
+        >01 / 54</button>
       </div>
     </section>
 
-    <!-- 54 MINIATUREN (Laden en verschijnen sequentieel van 01 t/m 54 als een laadbalk) -->
+    <!-- 54 MINIATUREN (Sequentiële laadbalk + magneet-effect) -->
     <section aria-label="Fotoselectie" class="relative z-10 w-full pt-1 pb-12 shrink-0">
       <div
         id="thumbnailGrid"
@@ -229,12 +241,13 @@
     let activeRequestId = 0;
     let isScrolling = false;
     let scrollTimer = null;
+    let copyFeedbackTimer = null;
     const preloadedCache = new Set();
 
     const heroStage = document.getElementById('heroStage');
     const heroImage = document.getElementById('heroImage');
     const heroTitle = document.getElementById('heroTitle');
-    const heroCounter = document.getElementById('heroCounter');
+    const heroCounterBtn = document.getElementById('heroCounterBtn');
     const heroPrevBtn = document.getElementById('heroPrevBtn');
     const heroNextBtn = document.getElementById('heroNextBtn');
     const thumbnailGrid = document.getElementById('thumbnailGrid');
@@ -279,7 +292,6 @@
       }
     }
 
-    // Laadt foto 1 -> 2 -> 3 -> ... -> 54 strikt op volgorde en onthult ze direct bij aankomst
     async function loadThumbnailsSequentially(thumbItems) {
       for (let i = 0; i < thumbItems.length; i++) {
         const { btn, img, src } = thumbItems[i];
@@ -294,7 +306,6 @@
             requestAnimationFrame(() => {
               btn.classList.add('is-loaded');
             });
-            // Korte ademruimte (25ms) zodat de opeenvolgende voortgang ook bij snelle cache zichtbaar loopt
             setTimeout(resolve, 25);
           };
 
@@ -325,6 +336,22 @@
       }
     }
 
+    function formatCounterText(index) {
+      const formattedNum = String(index + 1).padStart(2, '0');
+      return `${formattedNum} / ${String(photos.length).padStart(2, '0')}`;
+    }
+
+    function updateNeighborHighlight(hoverIndex) {
+      const buttons = thumbnailGrid.querySelectorAll('.thumb-btn');
+      buttons.forEach((btn, idx) => {
+        if (hoverIndex !== null && (idx === hoverIndex - 1 || idx === hoverIndex + 1)) {
+          btn.classList.add('is-neighbor');
+        } else {
+          btn.classList.remove('is-neighbor');
+        }
+      });
+    }
+
     function selectPhoto(index, updateHash = false) {
       const wrappedIndex = (index + photos.length) % photos.length;
       if (wrappedIndex === currentIndex && heroImage.dataset.loaded === 'true') {
@@ -336,8 +363,9 @@
       const photo = photos[currentIndex];
       const formattedNum = String(currentIndex + 1).padStart(2, '0');
 
+      clearTimeout(copyFeedbackTimer);
       heroTitle.textContent = photo.title;
-      heroCounter.textContent = `${formattedNum} / ${String(photos.length).padStart(2, '0')}`;
+      heroCounterBtn.textContent = formatCounterText(currentIndex);
 
       const buttons = thumbnailGrid.querySelectorAll('.thumb-btn');
       buttons.forEach((btn, idx) => {
@@ -366,6 +394,22 @@
 
       preloadImage(currentIndex + 1);
       preloadImage(currentIndex - 1);
+    }
+
+    async function copyDirectPhotoLink() {
+      updateUrlHash(currentIndex);
+      const shareUrl = `${window.location.origin}${window.location.pathname}#${currentIndex + 1}`;
+      try {
+        await navigator.clipboard.writeText(shareUrl);
+        heroCounterBtn.textContent = 'LINK GEKOPIEERD';
+        clearTimeout(copyFeedbackTimer);
+        copyFeedbackTimer = setTimeout(() => {
+          heroCounterBtn.textContent = formatCounterText(currentIndex);
+        }, 1500);
+      } catch (e) {
+        // Fallback als klembord geblokkeerd is
+        window.location.hash = `#${currentIndex + 1}`;
+      }
     }
 
     function attachSwipeNavigation(element) {
@@ -410,8 +454,12 @@
 
         btn.addEventListener('pointermove', (e) => {
           if (e.pointerType === 'mouse' && !isScrolling) {
+            updateNeighborHighlight(index);
             selectPhoto(index, false);
           }
+        });
+        btn.addEventListener('pointerleave', () => {
+          updateNeighborHighlight(null);
         });
         btn.addEventListener('click', () => selectPhoto(index, true));
 
@@ -424,12 +472,11 @@
         : 0;
 
       selectPhoto(initialIndex, false);
-
-      // Start de sequentiële laadbalk zodra de hoofdfoto staat
       loadThumbnailsSequentially(thumbItems);
 
       heroPrevBtn.addEventListener('click', () => selectPhoto(currentIndex - 1, true));
       heroNextBtn.addEventListener('click', () => selectPhoto(currentIndex + 1, true));
+      heroCounterBtn.addEventListener('click', copyDirectPhotoLink);
 
       attachSwipeNavigation(heroStage);
 
