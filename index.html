@@ -39,7 +39,6 @@
       overflow-y: scroll;
     }
 
-    /* Stap 3: Subtiele architecturale intro-animatie op de hoofdtitel */
     .header-title {
       letter-spacing: 0.24em;
       opacity: 0.25;
@@ -65,26 +64,23 @@
       }
     }
 
-    /* Zolang een miniatuur nog niet aan de beurt is geweest: volledig leeg (puur wit) */
     .thumb-btn img {
       opacity: 0;
       filter: grayscale(100%);
-      transition: opacity 420ms cubic-bezier(0.22, 1, 0.36, 1), filter 220ms ease, transform 220ms ease;
+      transition: opacity 420ms cubic-bezier(0.22, 1, 0.36, 1), filter 260ms ease, transform 220ms ease;
     }
 
-    /* Standaard ingeladen ruststand */
     .thumb-btn.is-loaded:not(.is-active) img {
       opacity: 0.55;
       filter: grayscale(100%);
     }
 
-    /* Magneet-effect voor de direct aangrenzende miniaturen (links en rechts) */
+    /* Magneet-effect op desktop én telefoon voor de direct aangrenzende miniaturen */
     .thumb-btn.is-loaded.is-neighbor:not(.is-active) img {
       opacity: 0.82;
-      filter: grayscale(55%);
+      filter: grayscale(45%);
     }
 
-    /* Actieve of aangewezen foto */
     .thumb-btn.is-loaded:hover img,
     .thumb-btn.is-loaded.is-active img {
       opacity: 1;
@@ -94,14 +90,14 @@
 </head>
 <body class="bg-pureWhite text-pureBlack selection:bg-pureBlack selection:text-pureWhite min-h-screen flex flex-col">
 
-  <!-- HEADER (Stap 1, 2, 3 & 4: Klikbare ankerkop, intro-spatiëring, subtitel & live voortgangslijn) -->
+  <!-- HEADER -->
   <header class="pt-7 pb-3 px-6 md:px-12 shrink-0">
     <div class="max-w-6xl mx-auto flex flex-col items-center">
       <button
         id="brandResetBtn"
         type="button"
         title="Terug naar begin (01)"
-        class="group flex flex-col items-center focus:outline-none cursor-pointer"
+        class="flex flex-col items-center focus:outline-none cursor-pointer"
       >
         <h1
           id="headerTitle"
@@ -109,9 +105,6 @@
         >
           Bjorn van Es
         </h1>
-        <span class="mt-1.5 text-[10px] md:text-[11px] font-medium uppercase tracking-[0.35em] text-neutral-400 group-hover:text-pureBlack transition-colors">
-          Selected Works
-        </span>
       </button>
 
       <!-- Galerie-liniaal met geïntegreerde 1px voortgangslijn -->
@@ -171,7 +164,7 @@
         </button>
       </div>
 
-      <!-- TITEL & KLIKBARE TELLER (Kopieert directe link) -->
+      <!-- TITEL & KLIKBARE TELLER -->
       <div class="w-full max-w-3xl h-6 flex items-center justify-between pt-3 px-1 text-xs uppercase tracking-widest text-neutral-500 font-medium shrink-0">
         <span id="heroTitle" class="truncate pr-4 text-pureBlack">Tsitsikamma NP</span>
         <button
@@ -183,7 +176,7 @@
       </div>
     </section>
 
-    <!-- 54 MINIATUREN (Sequentiële laadbalk + magneet-effect) -->
+    <!-- 54 MINIATUREN -->
     <section aria-label="Fotoselectie" class="relative z-10 w-full pt-1 pb-12 shrink-0">
       <div
         id="thumbnailGrid"
@@ -393,10 +386,10 @@
       return `${formattedNum} / ${String(photos.length).padStart(2, '0')}`;
     }
 
-    function updateNeighborHighlight(hoverIndex) {
+    function updateNeighborHighlight(centerIndex) {
       const buttons = thumbnailGrid.querySelectorAll('.thumb-btn');
       buttons.forEach((btn, idx) => {
-        if (hoverIndex !== null && (idx === hoverIndex - 1 || idx === hoverIndex + 1)) {
+        if (centerIndex !== null && (idx === centerIndex - 1 || idx === centerIndex + 1)) {
           btn.classList.add('is-neighbor');
         } else {
           btn.classList.remove('is-neighbor');
@@ -407,6 +400,7 @@
     function selectPhoto(index, updateHash = false) {
       const wrappedIndex = (index + photos.length) % photos.length;
       if (wrappedIndex === currentIndex && heroImage.dataset.loaded === 'true') {
+        updateNeighborHighlight(currentIndex);
         return;
       }
 
@@ -433,6 +427,9 @@
           btn.removeAttribute('aria-current');
         }
       });
+
+      // Laat de direct naastgelegen miniaturen altijd meeverkleuren (ook op mobiel)
+      updateNeighborHighlight(currentIndex);
 
       const loader = new Image();
       loader.decoding = 'async';
@@ -491,7 +488,6 @@
     }
 
     function initGallery() {
-      // Trigger de subtiele intro-spatiëring van de koptekst
       requestAnimationFrame(() => {
         headerTitle.classList.add('is-revealed');
       });
@@ -514,12 +510,8 @@
 
         btn.addEventListener('pointermove', (e) => {
           if (e.pointerType === 'mouse' && !isScrolling) {
-            updateNeighborHighlight(index);
             selectPhoto(index, false);
           }
-        });
-        btn.addEventListener('pointerleave', () => {
-          updateNeighborHighlight(null);
         });
         btn.addEventListener('click', () => selectPhoto(index, true));
 
@@ -534,7 +526,6 @@
       selectPhoto(initialIndex, false);
       loadThumbnailsSequentially(thumbItems);
 
-      // Stap 2: Klik op BJORN VAN ES keert rustig terug naar boven en foto 01
       brandResetBtn.addEventListener('click', () => {
         window.scrollTo({ top: 0, behavior: 'smooth' });
         selectPhoto(0, true);
