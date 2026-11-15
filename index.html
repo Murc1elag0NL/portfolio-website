@@ -53,14 +53,14 @@
       }
     }
 
-    /* Zolang een miniatuur nog niet geladen is: volledig onzichtbaar (puur wit) */
+    /* Zolang een miniatuur nog niet aan de beurt is geweest: volledig leeg (puur wit) */
     .thumb-btn img {
       opacity: 0;
       filter: grayscale(100%);
-      transition: opacity 550ms cubic-bezier(0.22, 1, 0.36, 1), filter 220ms ease;
+      transition: opacity 450ms cubic-bezier(0.22, 1, 0.36, 1), filter 200ms ease;
     }
 
-    /* Zodra ingeladen: vloeit langzaam in */
+    /* Zodra de foto is ingeladen en zijn beurt bereikt: vloeit in als onderdeel van de laadbalk */
     .thumb-btn.is-loaded:not(.is-active) img {
       opacity: 0.55;
       filter: grayscale(100%);
@@ -137,7 +137,7 @@
       </div>
     </section>
 
-    <!-- 54 MINIATUREN (Geen grijze vakjes vooraf; vloeien zacht in zodra geladen) -->
+    <!-- 54 MINIATUREN (Laden en verschijnen sequentieel van 01 t/m 54 als een laadbalk) -->
     <section aria-label="Fotoselectie" class="relative z-10 w-full pt-1 pb-12 shrink-0">
       <div
         id="thumbnailGrid"
@@ -247,10 +247,7 @@
       }, 150);
     }, { passive: true });
 
-    function optimizeThumbWithCanvas(imgElement) {
-      if (!imgElement.complete || imgElement.naturalWidth === 0 || imgElement.dataset.optimized === 'true') {
-        return;
-      }
+    function compressToThumbDataUrl(sourceImg) {
       try {
         const canvas = document.createElement('canvas');
         const targetW = 240;
@@ -259,27 +256,54 @@
         canvas.height = targetH;
         const ctx = canvas.getContext('2d');
 
-        const imgRatio = imgElement.naturalWidth / imgElement.naturalHeight;
+        const imgRatio = sourceImg.naturalWidth / sourceImg.naturalHeight;
         const targetRatio = targetW / targetH;
         let drawW, drawH, offsetX, offsetY;
 
         if (imgRatio > targetRatio) {
-          drawH = imgElement.naturalHeight;
-          drawW = imgElement.naturalHeight * targetRatio;
-          offsetX = (imgElement.naturalWidth - drawW) / 2;
+          drawH = sourceImg.naturalHeight;
+          drawW = sourceImg.naturalHeight * targetRatio;
+          offsetX = (sourceImg.naturalWidth - drawW) / 2;
           offsetY = 0;
         } else {
-          drawW = imgElement.naturalWidth;
-          drawH = imgElement.naturalWidth / targetRatio;
+          drawW = sourceImg.naturalWidth;
+          drawH = sourceImg.naturalWidth / targetRatio;
           offsetX = 0;
-          offsetY = (imgElement.naturalHeight - drawH) / 2;
+          offsetY = (sourceImg.naturalHeight - drawH) / 2;
         }
 
-        ctx.drawImage(imgElement, offsetX, offsetY, drawW, drawH, 0, 0, targetW, targetH);
-        imgElement.src = canvas.toDataURL('image/jpeg', 0.72);
-        imgElement.dataset.optimized = 'true';
+        ctx.drawImage(sourceImg, offsetX, offsetY, drawW, drawH, 0, 0, targetW, targetH);
+        return canvas.toDataURL('image/jpeg', 0.72);
       } catch (e) {
-        // Laat originele src staan als canvas niet beschikbaar is
+        return sourceImg.src;
+      }
+    }
+
+    // Laadt foto 1 -> 2 -> 3 -> ... -> 54 strikt op volgorde en onthult ze direct bij aankomst
+    async function loadThumbnailsSequentially(thumbItems) {
+      for (let i = 0; i < thumbItems.length; i++) {
+        const { btn, img, src } = thumbItems[i];
+
+        await new Promise((resolve) => {
+          const loader = new Image();
+          loader.decoding = 'async';
+          loader.src = src;
+
+          loader.onload = () => {
+            img.src = compressToThumbDataUrl(loader);
+            requestAnimationFrame(() => {
+              btn.classList.add('is-loaded');
+            });
+            // Korte ademruimte (25ms) zodat de opeenvolgende voortgang ook bij snelle cache zichtbaar loopt
+            setTimeout(resolve, 25);
+          };
+
+          loader.onerror = () => {
+            img.src = src;
+            btn.classList.add('is-loaded');
+            resolve();
+          };
+        });
       }
     }
 
@@ -368,6 +392,8 @@
     }
 
     function initGallery() {
+      const thumbItems = [];
+
       photos.forEach((photo, index) => {
         const num = String(index + 1).padStart(2, '0');
         const btn = document.createElement('button');
@@ -376,26 +402,11 @@
         btn.setAttribute('aria-label', photo.title ? `${num} - ${photo.title}` : `Foto ${num}`);
 
         const img = document.createElement('img');
-        img.src = photo.src;
         img.alt = photo.title || `Foto ${num}`;
-        img.loading = index < 20 ? 'eager' : 'lazy';
-        img.decoding = 'async';
         img.className = 'w-full h-full object-cover';
 
-        const handleImageReady = () => {
-          optimizeThumbWithCanvas(img);
-          requestAnimationFrame(() => {
-            btn.classList.add('is-loaded');
-          });
-        };
-
-        if (img.complete && img.naturalWidth > 0) {
-          handleImageReady();
-        } else {
-          img.addEventListener('load', handleImageReady, { once: true });
-        }
-
         btn.appendChild(img);
+        thumbItems.push({ btn, img, src: photo.src });
 
         btn.addEventListener('pointermove', (e) => {
           if (e.pointerType === 'mouse' && !isScrolling) {
@@ -413,6 +424,9 @@
         : 0;
 
       selectPhoto(initialIndex, false);
+
+      // Start de sequentiële laadbalk zodra de hoofdfoto staat
+      loadThumbnailsSequentially(thumbItems);
 
       heroPrevBtn.addEventListener('click', () => selectPhoto(currentIndex - 1, true));
       heroNextBtn.addEventListener('click', () => selectPhoto(currentIndex + 1, true));
