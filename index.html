@@ -88,15 +88,14 @@
   <!-- HOOFDPODIUM & 54-FOTO CONTACTSHEET -->
   <main class="flex-1 max-w-6xl w-full mx-auto px-6 md:px-12 pb-24 flex flex-col gap-6">
 
-    <!-- STICKY GROTE HERO WEERGAVE -->
+    <!-- STICKY GROTE HERO WEERGAVE (Klikken op de foto doet niets) -->
     <section
       aria-label="Geselecteerde foto"
       class="sticky top-0 z-20 bg-pureWhite pt-2 pb-3 w-full flex flex-col items-center shrink-0"
     >
       <div
         id="heroStage"
-        class="relative w-full flex items-center justify-center bg-pureWhite cursor-zoom-in select-none touch-pan-y overflow-hidden"
-        title="Klik voor volledig scherm"
+        class="relative w-full flex items-center justify-center bg-pureWhite select-none touch-pan-y overflow-hidden"
       >
         <!-- Vorige foto knop -->
         <button
@@ -156,45 +155,6 @@
       <span>&copy; All rights reserved</span>
     </div>
   </footer>
-
-  <!-- FULLSCREEN LIGHTBOX -->
-  <div
-    id="lightbox"
-    class="fixed inset-0 z-50 bg-pureWhite hidden items-center justify-center p-4 md:p-10 cursor-zoom-out select-none touch-pan-y"
-    aria-hidden="true"
-  >
-    <!-- Vorige foto knop in lightbox -->
-    <button
-      id="lightboxPrevBtn"
-      type="button"
-      aria-label="Vorige foto"
-      class="absolute left-3 md:left-6 z-10 w-11 h-11 md:w-12 md:h-12 flex items-center justify-center bg-pureWhite/90 text-pureBlack border border-black/15 hover:bg-pureBlack hover:text-pureWhite active:bg-pureBlack active:text-pureWhite transition-colors cursor-pointer"
-    >
-      <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="square">
-        <path d="M15 18l-6-6 6-6" />
-      </svg>
-    </button>
-
-    <img
-      id="lightboxImage"
-      src=""
-      alt="Volledig scherm"
-      decoding="async"
-      class="max-h-full max-w-full w-auto h-auto object-contain px-12 md:px-16"
-    />
-
-    <!-- Volgende foto knop in lightbox -->
-    <button
-      id="lightboxNextBtn"
-      type="button"
-      aria-label="Volgende foto"
-      class="absolute right-3 md:right-6 z-10 w-11 h-11 md:w-12 md:h-12 flex items-center justify-center bg-pureWhite/90 text-pureBlack border border-black/15 hover:bg-pureBlack hover:text-pureWhite active:bg-pureBlack active:text-pureWhite transition-colors cursor-pointer"
-    >
-      <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="square">
-        <path d="M9 18l6-6-6-6" />
-      </svg>
-    </button>
-  </div>
 
   <!-- SCRIPT -->
   <script>
@@ -279,10 +239,6 @@
     const heroPrevBtn = document.getElementById('heroPrevBtn');
     const heroNextBtn = document.getElementById('heroNextBtn');
     const thumbnailGrid = document.getElementById('thumbnailGrid');
-    const lightbox = document.getElementById('lightbox');
-    const lightboxImage = document.getElementById('lightboxImage');
-    const lightboxPrevBtn = document.getElementById('lightboxPrevBtn');
-    const lightboxNextBtn = document.getElementById('lightboxNextBtn');
 
     window.addEventListener('scroll', () => {
       isScrolling = true;
@@ -379,9 +335,6 @@
         heroImage.src = photo.src;
         heroImage.alt = photo.title ? `Bjorn van Es - ${photo.title}` : `Bjorn van Es - ${formattedNum}`;
         heroImage.dataset.loaded = 'true';
-        if (!lightbox.classList.contains('hidden')) {
-          lightboxImage.src = photo.src;
-        }
       };
 
       if (updateHash) {
@@ -390,21 +343,6 @@
 
       preloadImage(currentIndex + 1);
       preloadImage(currentIndex - 1);
-    }
-
-    function openLightbox() {
-      lightboxImage.src = photos[currentIndex].src;
-      lightbox.classList.remove('hidden');
-      lightbox.classList.add('flex');
-      lightbox.setAttribute('aria-hidden', 'false');
-      document.body.style.overflow = 'hidden';
-    }
-
-    function closeLightbox() {
-      lightbox.classList.add('hidden');
-      lightbox.classList.remove('flex');
-      lightbox.setAttribute('aria-hidden', 'true');
-      document.body.style.overflow = '';
     }
 
     function attachSwipeNavigation(element) {
@@ -465,27 +403,10 @@
 
       selectPhoto(initialIndex, false);
 
-      heroPrevBtn.addEventListener('click', (e) => {
-        e.stopPropagation();
-        selectPhoto(currentIndex - 1, true);
-      });
-      heroNextBtn.addEventListener('click', (e) => {
-        e.stopPropagation();
-        selectPhoto(currentIndex + 1, true);
-      });
-      lightboxPrevBtn.addEventListener('click', (e) => {
-        e.stopPropagation();
-        selectPhoto(currentIndex - 1, true);
-      });
-      lightboxNextBtn.addEventListener('click', (e) => {
-        e.stopPropagation();
-        selectPhoto(currentIndex + 1, true);
-      });
+      heroPrevBtn.addEventListener('click', () => selectPhoto(currentIndex - 1, true));
+      heroNextBtn.addEventListener('click', () => selectPhoto(currentIndex + 1, true));
 
-      heroStage.addEventListener('click', openLightbox);
-      lightbox.addEventListener('click', closeLightbox);
       attachSwipeNavigation(heroStage);
-      attachSwipeNavigation(lightbox);
 
       document.addEventListener('keydown', (e) => {
         if (e.key === 'ArrowRight') {
@@ -494,8 +415,6 @@
         } else if (e.key === 'ArrowLeft') {
           e.preventDefault();
           selectPhoto(currentIndex - 1, true);
-        } else if (e.key === 'Escape' && !lightbox.classList.contains('hidden')) {
-          closeLightbox();
         }
       });
 
