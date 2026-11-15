@@ -53,24 +53,23 @@
       }
     }
 
+    /* Zolang een miniatuur nog niet geladen is: volledig onzichtbaar (puur wit) */
     .thumb-btn img {
-      transition: filter 160ms ease, opacity 160ms ease;
-    }
-
-    .thumb-btn:hover img,
-    .thumb-btn.is-active img {
-      filter: grayscale(0%);
-      opacity: 1;
-    }
-
-    .thumb-btn:not(.is-active) img {
+      opacity: 0;
       filter: grayscale(100%);
-      opacity: 0.55;
+      transition: opacity 550ms cubic-bezier(0.22, 1, 0.36, 1), filter 220ms ease;
     }
 
-    .thumb-btn:not(.is-active):hover img {
-      filter: grayscale(0%);
+    /* Zodra ingeladen: vloeit langzaam in */
+    .thumb-btn.is-loaded:not(.is-active) img {
+      opacity: 0.55;
+      filter: grayscale(100%);
+    }
+
+    .thumb-btn.is-loaded:hover img,
+    .thumb-btn.is-loaded.is-active img {
       opacity: 1;
+      filter: grayscale(0%);
     }
   </style>
 </head>
@@ -88,7 +87,7 @@
   <!-- HOOFDPODIUM & 54-FOTO CONTACTSHEET -->
   <main class="flex-1 max-w-6xl w-full mx-auto px-6 md:px-12 pb-24 flex flex-col gap-6">
 
-    <!-- STICKY GROTE HERO WEERGAVE (Klikken op de foto doet niets) -->
+    <!-- STICKY GROTE HERO WEERGAVE -->
     <section
       aria-label="Geselecteerde foto"
       class="sticky top-0 z-20 bg-pureWhite pt-2 pb-3 w-full flex flex-col items-center shrink-0"
@@ -138,7 +137,7 @@
       </div>
     </section>
 
-    <!-- 54 MINIATUREN -->
+    <!-- 54 MINIATUREN (Geen grijze vakjes vooraf; vloeien zacht in zodra geladen) -->
     <section aria-label="Fotoselectie" class="relative z-10 w-full pt-1 pb-12 shrink-0">
       <div
         id="thumbnailGrid"
@@ -373,16 +372,28 @@
         const num = String(index + 1).padStart(2, '0');
         const btn = document.createElement('button');
         btn.type = 'button';
-        btn.className = 'thumb-btn aspect-[4/3] w-[calc(20%-0.4rem)] sm:w-[calc(16.666%-0.521rem)] lg:w-[calc(10%-0.5625rem)] overflow-hidden bg-neutral-100 focus:outline-none cursor-pointer';
+        btn.className = 'thumb-btn aspect-[4/3] w-[calc(20%-0.4rem)] sm:w-[calc(16.666%-0.521rem)] lg:w-[calc(10%-0.5625rem)] overflow-hidden bg-pureWhite focus:outline-none cursor-pointer';
         btn.setAttribute('aria-label', photo.title ? `${num} - ${photo.title}` : `Foto ${num}`);
 
         const img = document.createElement('img');
         img.src = photo.src;
         img.alt = photo.title || `Foto ${num}`;
-        img.loading = index < 15 ? 'eager' : 'lazy';
+        img.loading = index < 20 ? 'eager' : 'lazy';
         img.decoding = 'async';
         img.className = 'w-full h-full object-cover';
-        img.addEventListener('load', () => optimizeThumbWithCanvas(img), { once: true });
+
+        const handleImageReady = () => {
+          optimizeThumbWithCanvas(img);
+          requestAnimationFrame(() => {
+            btn.classList.add('is-loaded');
+          });
+        };
+
+        if (img.complete && img.naturalWidth > 0) {
+          handleImageReady();
+        } else {
+          img.addEventListener('load', handleImageReady, { once: true });
+        }
 
         btn.appendChild(img);
 
