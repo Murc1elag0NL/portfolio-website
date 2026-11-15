@@ -39,6 +39,18 @@
       overflow-y: scroll;
     }
 
+    /* Stap 3: Subtiele architecturale intro-animatie op de hoofdtitel */
+    .header-title {
+      letter-spacing: 0.24em;
+      opacity: 0.25;
+      transition: letter-spacing 800ms cubic-bezier(0.22, 1, 0.36, 1), opacity 600ms ease;
+    }
+
+    .header-title.is-revealed {
+      letter-spacing: -0.025em;
+      opacity: 1;
+    }
+
     #heroStage {
       height: 46vh;
       min-height: 300px;
@@ -66,7 +78,7 @@
       filter: grayscale(100%);
     }
 
-    /* Stap 1: Magneet-effect voor de direct aangrenzende miniaturen (links en rechts) */
+    /* Magneet-effect voor de direct aangrenzende miniaturen (links en rechts) */
     .thumb-btn.is-loaded.is-neighbor:not(.is-active) img {
       opacity: 0.82;
       filter: grayscale(55%);
@@ -82,12 +94,34 @@
 </head>
 <body class="bg-pureWhite text-pureBlack selection:bg-pureBlack selection:text-pureWhite min-h-screen flex flex-col">
 
-  <!-- HEADER -->
-  <header class="pt-7 pb-4 px-6 md:px-12 shrink-0">
-    <div class="max-w-6xl mx-auto text-center">
-      <h1 class="text-2xl md:text-4xl font-bold tracking-tight uppercase">
-        Bjorn van Es
-      </h1>
+  <!-- HEADER (Stap 1, 2, 3 & 4: Klikbare ankerkop, intro-spatiëring, subtitel & live voortgangslijn) -->
+  <header class="pt-7 pb-3 px-6 md:px-12 shrink-0">
+    <div class="max-w-6xl mx-auto flex flex-col items-center">
+      <button
+        id="brandResetBtn"
+        type="button"
+        title="Terug naar begin (01)"
+        class="group flex flex-col items-center focus:outline-none cursor-pointer"
+      >
+        <h1
+          id="headerTitle"
+          class="header-title text-2xl md:text-4xl font-bold uppercase text-pureBlack"
+        >
+          Bjorn van Es
+        </h1>
+        <span class="mt-1.5 text-[10px] md:text-[11px] font-medium uppercase tracking-[0.35em] text-neutral-400 group-hover:text-pureBlack transition-colors">
+          Selected Works
+        </span>
+      </button>
+
+      <!-- Galerie-liniaal met geïntegreerde 1px voortgangslijn -->
+      <div class="w-full h-[1px] bg-black/10 mt-5 relative overflow-hidden">
+        <div
+          id="headerProgressBar"
+          class="h-full bg-pureBlack transition-all duration-300 ease-out"
+          style="width: 1.85%;"
+        ></div>
+      </div>
     </div>
   </header>
 
@@ -242,8 +276,12 @@
     let isScrolling = false;
     let scrollTimer = null;
     let copyFeedbackTimer = null;
+    let initialLoadFinished = false;
     const preloadedCache = new Set();
 
+    const headerTitle = document.getElementById('headerTitle');
+    const brandResetBtn = document.getElementById('brandResetBtn');
+    const headerProgressBar = document.getElementById('headerProgressBar');
     const heroStage = document.getElementById('heroStage');
     const heroImage = document.getElementById('heroImage');
     const heroTitle = document.getElementById('heroTitle');
@@ -259,6 +297,11 @@
         isScrolling = false;
       }, 150);
     }, { passive: true });
+
+    function updateHeaderProgress(step, total) {
+      const pct = Math.min(100, Math.max(1.85, (step / total) * 100));
+      headerProgressBar.style.width = `${pct}%`;
+    }
 
     function compressToThumbDataUrl(sourceImg) {
       try {
@@ -305,6 +348,9 @@
             img.src = compressToThumbDataUrl(loader);
             requestAnimationFrame(() => {
               btn.classList.add('is-loaded');
+              if (!initialLoadFinished) {
+                updateHeaderProgress(i + 1, thumbItems.length);
+              }
             });
             setTimeout(resolve, 25);
           };
@@ -312,10 +358,16 @@
           loader.onerror = () => {
             img.src = src;
             btn.classList.add('is-loaded');
+            if (!initialLoadFinished) {
+              updateHeaderProgress(i + 1, thumbItems.length);
+            }
             resolve();
           };
         });
       }
+
+      initialLoadFinished = true;
+      updateHeaderProgress(currentIndex + 1, photos.length);
     }
 
     function preloadImage(index) {
@@ -367,6 +419,10 @@
       heroTitle.textContent = photo.title;
       heroCounterBtn.textContent = formatCounterText(currentIndex);
 
+      if (initialLoadFinished) {
+        updateHeaderProgress(currentIndex + 1, photos.length);
+      }
+
       const buttons = thumbnailGrid.querySelectorAll('.thumb-btn');
       buttons.forEach((btn, idx) => {
         if (idx === currentIndex) {
@@ -407,7 +463,6 @@
           heroCounterBtn.textContent = formatCounterText(currentIndex);
         }, 1500);
       } catch (e) {
-        // Fallback als klembord geblokkeerd is
         window.location.hash = `#${currentIndex + 1}`;
       }
     }
@@ -436,6 +491,11 @@
     }
 
     function initGallery() {
+      // Trigger de subtiele intro-spatiëring van de koptekst
+      requestAnimationFrame(() => {
+        headerTitle.classList.add('is-revealed');
+      });
+
       const thumbItems = [];
 
       photos.forEach((photo, index) => {
@@ -473,6 +533,12 @@
 
       selectPhoto(initialIndex, false);
       loadThumbnailsSequentially(thumbItems);
+
+      // Stap 2: Klik op BJORN VAN ES keert rustig terug naar boven en foto 01
+      brandResetBtn.addEventListener('click', () => {
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+        selectPhoto(0, true);
+      });
 
       heroPrevBtn.addEventListener('click', () => selectPhoto(currentIndex - 1, true));
       heroNextBtn.addEventListener('click', () => selectPhoto(currentIndex + 1, true));
